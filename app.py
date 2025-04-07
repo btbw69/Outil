@@ -31,10 +31,6 @@ if uploaded_file:
     if missing_columns:
         st.error("Le fichier est invalide. Colonnes manquantes après mapping : " + ", ".join(missing_columns))
     else:
-        # Ajout d'une colonne par défaut pour l'engagement si elle n'existe pas
-        if 'Engagement (mois)' not in df.columns:
-            df['Engagement (mois)'] = 36  # valeur par défaut
-
         technos = df['Technologie'].dropna().unique()
         techno_choice = st.selectbox("Choisissez une technologie", options=["Toutes"] + list(technos))
 
@@ -47,8 +43,8 @@ if uploaded_file:
 
         debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=["Tous"] + list(debits))
 
-        # Application des filtres
-        df_filtered = df[df['Engagement (mois)'] == engagement]
+        # Application des filtres (sans filtrer par engagement)
+        df_filtered = df.copy()
         if techno_choice != "Toutes":
             df_filtered = df_filtered[df_filtered['Technologie'] == techno_choice]
         if debit_choice != "Tous":
@@ -60,7 +56,7 @@ if uploaded_file:
             # Remplissage des valeurs manquantes pour les frais d'accès
             df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
 
-            # Calcul du coût total
+            # Calcul du coût total avec la valeur du slider
             df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
 
             # Sélection de l'offre la moins chère par site
