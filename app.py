@@ -63,6 +63,10 @@ if uploaded_file:
             # Sélection de l'offre la moins chère par site
             best_offers = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
 
+            # Affichage du nombre de sites éligibles
+            nb_sites = best_offers['Site'].nunique()
+            st.markdown(f"### Nombre de sites éligibles à la {techno_choice} : {nb_sites}")
+
             # Colonnes à exclure
             colonnes_a_exclure = ['NDI', 'INSEECode', 'rivoli code', 'Available Copper Pair', 'Needed Coppoer Pair']
             colonnes_finales = [col for col in best_offers.columns if col not in colonnes_a_exclure]
