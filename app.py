@@ -54,6 +54,9 @@ if uploaded_file:
         if df_filtered.empty:
             st.warning("Aucune offre ne correspond aux critères sélectionnés.")
         else:
+            # Remplissage des valeurs manquantes pour les frais d'accès
+            df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
+
             # Calcul du coût total
             df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
 
