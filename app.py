@@ -22,6 +22,12 @@ if uploaded_file:
 
     df = df.rename(columns=column_mapping)
 
+    # Remplacer les débits FTTH 1000M et 1000/200M par "1 gbits"
+    df['Débit'] = df.apply(
+        lambda row: '1 gbits' if row['Technologie'] == 'FTTH' and row['Débit'] in ['1000M', '1000/200M'] else row['Débit'],
+        axis=1
+    )
+
     # Vérification post-mapping
     required = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
     missing_columns = [col for col in required if col not in df.columns]
@@ -34,11 +40,14 @@ if uploaded_file:
         engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36)
 
         if techno_choice != "Toutes":
-            debits = df[df['Technologie'] == techno_choice]['Débit'].dropna().unique()
+            filtered_df_for_debit = df[df['Technologie'] == techno_choice]
+            debits = filtered_df_for_debit['Débit'].dropna().unique()
+            debit_default = "1 gbits" if techno_choice == "FTTH" and "1 gbits" in debits else "Tous"
         else:
             debits = df['Débit'].dropna().unique()
+            debit_default = "Tous"
 
-        debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=["Tous"] + list(debits))
+        debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=["Tous"] + list(debits), index=["Tous"] + list(debits).index(debit_default) if debit_default in debits else 0)
 
         # Application des filtres (sans filtrer par engagement)
         df_filtered = df.copy()
