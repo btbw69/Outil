@@ -41,13 +41,19 @@ if uploaded_file:
 
         if techno_choice != "Toutes":
             filtered_df_for_debit = df[df['Technologie'] == techno_choice]
-            debits = filtered_df_for_debit['Débit'].dropna().unique()
-            debit_default = "1 gbits" if techno_choice == "FTTH" and "1 gbits" in debits else "Tous"
         else:
-            debits = df['Débit'].dropna().unique()
-            debit_default = "Tous"
+            filtered_df_for_debit = df
 
-        debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=["Tous"] + list(debits), index=["Tous"] + list(debits).index(debit_default) if debit_default in debits else 0)
+        debits = sorted(filtered_df_for_debit['Débit'].dropna().unique())
+        debit_options = ["Tous"] + list(debits)
+
+        # Fix pour éviter erreur si "1 gbits" non trouvé
+        if techno_choice == "FTTH" and "1 gbits" in debit_options:
+            debit_index = debit_options.index("1 gbits")
+        else:
+            debit_index = 0
+
+        debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options, index=debit_index)
 
         # Application des filtres (sans filtrer par engagement)
         df_filtered = df.copy()
