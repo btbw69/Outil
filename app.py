@@ -13,11 +13,11 @@ if uploaded_file:
     # Affichage des colonnes réelles du fichier pour débogage
     st.write("Colonnes détectées dans le fichier :", list(df.columns))
 
-    # Mapping manuel à partir des noms réels
+    # Mapping manuel à partir des noms réels (corrigé avec majuscules)
     column_mapping = {
-        'name': 'Site',
+        'Name': 'Site',
         'OBL': 'Opérateur',
-        'type physical link': 'Technologie',
+        'Type Physical Link': 'Technologie',
         'bandwidth': 'Débit',
         'FASSellPrice': "Frais d'accès",
         'CRMSellPrice': 'Prix mensuel'
@@ -26,7 +26,8 @@ if uploaded_file:
     df = df.rename(columns=column_mapping)
 
     # Vérification post-mapping
-    missing_columns = [col for col in ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"] if col not in df.columns]
+    required = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
+    missing_columns = [col for col in required if col not in df.columns]
     if missing_columns:
         st.error("Le fichier est invalide. Colonnes manquantes après mapping : " + ", ".join(missing_columns))
     else:
