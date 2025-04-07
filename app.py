@@ -60,12 +60,18 @@ if uploaded_file:
             # Sélection de l'offre la moins chère par site
             best_offers = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
 
+            # Colonnes à exclure
+            colonnes_a_exclure = ['NDI', 'INSEECode', 'rivoli code', 'available copper pair', 'needed coppoer pair']
+            colonnes_finales = [col for col in best_offers.columns if col not in colonnes_a_exclure]
+
+            best_offers_reduits = best_offers[colonnes_finales]
+
             st.subheader("Meilleures offres par site")
-            st.dataframe(best_offers, use_container_width=True)
+            st.dataframe(best_offers_reduits, use_container_width=True)
 
             # Export Excel
             output = BytesIO()
-            best_offers.to_excel(output, index=False, engine='openpyxl')
+            best_offers_reduits.to_excel(output, index=False, engine='openpyxl')
             output.seek(0)
 
             st.download_button(
