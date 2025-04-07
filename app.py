@@ -36,18 +36,21 @@ if uploaded_file:
             df['Engagement (mois)'] = 36  # valeur par défaut
 
         technos = df['Technologie'].dropna().unique()
-        techno_choice = st.selectbox("Choisissez une technologie", options=technos)
+        techno_choice = st.selectbox("Choisissez une technologie", options=["Toutes"] + list(technos))
 
         engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12)
 
-        debits = df['Débit'].dropna().unique()
+        if techno_choice != "Toutes":
+            debits = df[df['Technologie'] == techno_choice]['Débit'].dropna().unique()
+        else:
+            debits = df['Débit'].dropna().unique()
+
         debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=["Tous"] + list(debits))
 
         # Application des filtres
-        df_filtered = df[
-            (df['Technologie'] == techno_choice) &
-            (df['Engagement (mois)'] == engagement)
-        ]
+        df_filtered = df[df['Engagement (mois)'] == engagement]
+        if techno_choice != "Toutes":
+            df_filtered = df_filtered[df_filtered['Technologie'] == techno_choice]
         if debit_choice != "Tous":
             df_filtered = df_filtered[df_filtered['Débit'] == debit_choice]
 
