@@ -31,7 +31,7 @@ if uploaded_file:
         technos = df['Technologie'].dropna().unique()
         techno_choice = st.selectbox("Choisissez une technologie", options=["Toutes"] + list(technos))
 
-        engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12)
+        engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36)
 
         if techno_choice != "Toutes":
             debits = df[df['Technologie'] == techno_choice]['Débit'].dropna().unique()
