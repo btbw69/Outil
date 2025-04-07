@@ -10,9 +10,6 @@ uploaded_file = st.file_uploader("Téléversez le fichier d'offres", type=[".xls
 if uploaded_file:
     df = pd.read_excel(uploaded_file)
 
-    # Affichage des colonnes réelles du fichier pour débogage
-    st.write("Colonnes détectées dans le fichier :", list(df.columns))
-
     # Mapping manuel à partir des noms réels (corrigé avec majuscules)
     column_mapping = {
         'Name': 'Site',
