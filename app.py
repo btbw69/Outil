@@ -10,31 +10,36 @@ uploaded_file = st.file_uploader("Téléversez le fichier d'offres", type=[".xls
 if uploaded_file:
     df = pd.read_excel(uploaded_file)
 
-    # Mapping des colonnes réelles vers les noms attendus
-    df = df.rename(columns={
+    # Affichage des colonnes réelles du fichier pour débogage
+    st.write("Colonnes détectées dans le fichier :", list(df.columns))
+
+    # Mapping manuel à partir des noms réels
+    column_mapping = {
         'name': 'Site',
         'OBL': 'Opérateur',
         'type physical link': 'Technologie',
         'bandwidth': 'Débit',
         'FASSellPrice': "Frais d'accès",
         'CRMSellPrice': 'Prix mensuel'
-    })
+    }
 
-    # Ajout d'une colonne factice pour l'engagement (à ajuster si elle existe ailleurs)
-    if 'Engagement (mois)' not in df.columns:
-        df['Engagement (mois)'] = 36  # valeur par défaut, modifiable plus tard
+    df = df.rename(columns=column_mapping)
 
-    # Vérification des colonnes nécessaires
-    required_columns = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès", 'Engagement (mois)']
-    if not all(col in df.columns for col in required_columns):
-        st.error("Le fichier ne contient pas toutes les colonnes requises : " + ", ".join(required_columns))
+    # Vérification post-mapping
+    missing_columns = [col for col in ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"] if col not in df.columns]
+    if missing_columns:
+        st.error("Le fichier est invalide. Colonnes manquantes après mapping : " + ", ".join(missing_columns))
     else:
-        technos = df['Technologie'].unique()
+        # Ajout d'une colonne par défaut pour l'engagement si elle n'existe pas
+        if 'Engagement (mois)' not in df.columns:
+            df['Engagement (mois)'] = 36  # valeur par défaut
+
+        technos = df['Technologie'].dropna().unique()
         techno_choice = st.selectbox("Choisissez une technologie", options=technos)
 
         engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12)
 
-        debits = df['Débit'].unique()
+        debits = df['Débit'].dropna().unique()
         debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=["Tous"] + list(debits))
 
         # Application des filtres
@@ -45,23 +50,26 @@ if uploaded_file:
         if debit_choice != "Tous":
             df_filtered = df_filtered[df_filtered['Débit'] == debit_choice]
 
-        # Calcul du coût total
-        df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
+        if df_filtered.empty:
+            st.warning("Aucune offre ne correspond aux critères sélectionnés.")
+        else:
+            # Calcul du coût total
+            df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
 
-        # Sélection de l'offre la moins chère par site
-        best_offers = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
+            # Sélection de l'offre la moins chère par site
+            best_offers = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
 
-        st.subheader("Meilleures offres par site")
-        st.dataframe(best_offers, use_container_width=True)
+            st.subheader("Meilleures offres par site")
+            st.dataframe(best_offers, use_container_width=True)
 
-        # Export Excel
-        output = BytesIO()
-        best_offers.to_excel(output, index=False, engine='openpyxl')
-        output.seek(0)
+            # Export Excel
+            output = BytesIO()
+            best_offers.to_excel(output, index=False, engine='openpyxl')
+            output.seek(0)
 
-        st.download_button(
-            label="📥 Télécharger le fichier Excel",
-            data=output,
-            file_name="meilleures_offres.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+            st.download_button(
+                label="📥 Télécharger le fichier Excel",
+                data=output,
+                file_name="meilleures_offres.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
