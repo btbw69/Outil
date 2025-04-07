@@ -61,7 +61,7 @@ if uploaded_file:
             best_offers = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
 
             # Colonnes à exclure
-            colonnes_a_exclure = ['NDI', 'INSEECode', 'rivoli code', 'available copper pair', 'needed coppoer pair']
+            colonnes_a_exclure = ['NDI', 'INSEECode', 'rivoli code', 'Available Copper Pair', 'Needed Coppoer Pair']
             colonnes_finales = [col for col in best_offers.columns if col not in colonnes_a_exclure]
 
             best_offers_reduits = best_offers[colonnes_finales]
