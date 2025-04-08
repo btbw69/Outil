@@ -88,7 +88,7 @@ if uploaded_file:
 
                 # Colonnes à afficher en fonction de l'état du bouton
                 if st.session_state.columns_visible:
-                    colonnes_a_afficher = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
+                    colonnes_a_afficher = df.columns.tolist()  # Afficher toutes les colonnes disponibles
                 else:
                     colonnes_a_afficher = ['Site', "Frais d'accès", 'Prix mensuel']
 
