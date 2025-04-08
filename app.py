@@ -22,9 +22,9 @@ if uploaded_file:
 
     df = df.rename(columns=column_mapping)
 
-    # Exclure les lignes où Already Fiber == 'AvailableSoon'
+    # Exclure les lignes où Already Fiber == 'AvailableSoon' ou 'UnderCommercialTerms'
     if 'Already Fiber' in df.columns:
-        df = df[df['Already Fiber'] != 'AvailableSoon']
+        df = df[(df['Already Fiber'] != 'AvailableSoon') & (df['Already Fiber'] != 'UnderCommercialTerms')]
 
     # Remplacer les débits FTTH 1000M et 1000/200M par "1 gbits"
     df['Débit'] = df.apply(
@@ -32,7 +32,7 @@ if uploaded_file:
         axis=1
     )
 
-    # Initialisation correcte des onglets avec les nouveaux noms
+    # Initialisation correcte des onglets
     onglets = st.tabs(["FAS et Prix Opérateur le moins cher par site", "Sites éligible à un opérateur"])
 
     # --- Premier onglet : "FAS et Prix Opérateur le moins cher par site" ---
@@ -99,49 +99,49 @@ if uploaded_file:
                 )
 
     # --- Deuxième onglet : "Sites éligible à un opérateur" ---
-with onglets[1]:
-    st.markdown("### Vue par choix de techno, opérateur et débit")
+    with onglets[1]:
+        st.markdown("### Vue par choix de techno, opérateur et débit")
 
-    # Choix de la technologie
-    technos = df['Technologie'].dropna().unique()
-    techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_2")
+        # Choix de la technologie
+        technos = df['Technologie'].dropna().unique()
+        techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_2")
 
-    # Filtrer les opérateurs selon la technologie choisie
-    operateurs = df[df['Technologie'] == techno_choice]['Opérateur'].dropna().unique()
-    operateur_choice = st.selectbox("Choisissez un opérateur", options=list(operateurs), key="operateur_choice_2")
+        # Filtrer les opérateurs selon la technologie choisie
+        operateurs = df[df['Technologie'] == techno_choice]['Opérateur'].dropna().unique()
+        operateur_choice = st.selectbox("Choisissez un opérateur", options=list(operateurs), key="operateur_choice_2")
 
-    # Filtrer les débits selon la technologie choisie
-    filtered_df_for_debit = df[df['Technologie'] == techno_choice]
-    debits = sorted(filtered_df_for_debit['Débit'].dropna().unique())
-    debit_options = list(debits)
-    debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options, key="debit_choice_2")
+        # Filtrer les débits selon la technologie choisie
+        filtered_df_for_debit = df[df['Technologie'] == techno_choice]
+        debits = sorted(filtered_df_for_debit['Débit'].dropna().unique())
+        debit_options = list(debits)
+        debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options, key="debit_choice_2")
 
-    # Appliquer les filtres selon techno, opérateur et débit
-    df_filtered = df.copy()
-    df_filtered = df_filtered[df_filtered['Technologie'] == techno_choice]
-    df_filtered = df_filtered[df_filtered['Opérateur'] == operateur_choice]
-    df_filtered = df_filtered[df_filtered['Débit'] == debit_choice]
+        # Appliquer les filtres selon techno, opérateur et débit
+        df_filtered = df.copy()
+        df_filtered = df_filtered[df_filtered['Technologie'] == techno_choice]
+        df_filtered = df_filtered[df_filtered['Opérateur'] == operateur_choice]
+        df_filtered = df_filtered[df_filtered['Débit'] == debit_choice]
 
-    if df_filtered.empty:
-        st.warning("Aucune offre ne correspond aux critères sélectionnés.")
-    else:
-        # Nombre de sites éligibles pour l'opérateur sélectionné
-        nb_sites_operateur = df_filtered['Site'].nunique()
-        st.markdown(f"### Nombre de sites éligibles à {operateur_choice} : {nb_sites_operateur}")
+        if df_filtered.empty:
+            st.warning("Aucune offre ne correspond aux critères sélectionnés.")
+        else:
+            # Nombre de sites éligibles pour l'opérateur sélectionné
+            nb_sites_operateur = df_filtered['Site'].nunique()
+            st.markdown(f"### Nombre de sites éligibles à {operateur_choice} : {nb_sites_operateur}")
 
-        # Colonnes à afficher (mêmes que pour le 1er onglet)
-        colonnes_a_afficher = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
-        best_offers_reduits = df_filtered[colonnes_a_afficher]
+            # Colonnes à afficher (mêmes que pour le 1er onglet)
+            colonnes_a_afficher = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
+            best_offers_reduits = df_filtered[colonnes_a_afficher]
 
-        st.dataframe(best_offers_reduits, use_container_width=True)
+            st.dataframe(best_offers_reduits, use_container_width=True)
 
-        # Export Excel
-        output = BytesIO()
-        best_offers_reduits.to_excel(output, index=False, engine='openpyxl')
-        output.seek(0)
-        st.download_button(
-            label="📥 Télécharger le fichier Excel",
-            data=output,
-            file_name="offres_filtrees.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+            # Export Excel
+            output = BytesIO()
+            best_offers_reduits.to_excel(output, index=False, engine='openpyxl')
+            output.seek(0)
+            st.download_button(
+                label="📥 Télécharger le fichier Excel",
+                data=output,
+                file_name="offres_filtrees.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
