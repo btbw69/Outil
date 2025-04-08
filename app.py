@@ -33,11 +33,11 @@ if uploaded_file:
     )
 
     # Initialisation correcte des onglets
-    onglets = st.tabs(["FAS et Prix Opérateur le moins cher par site", "Sites éligible à un opérateur"])
+    onglets = st.tabs(["Choisir la techno et le débit souhaités", "Choisir une techno et un opérateur"])
 
-    # --- Premier onglet : "FAS et Prix Opérateur le moins cher par site" ---
+    # --- Premier onglet : "Choisir la techno et le débit souhaités" ---
     with onglets[0]:
-        st.markdown("### Opérateur le moins cher par site par débit")
+        st.markdown("### Choisir la techno et le débit souhaités")
 
         # Vérification post-mapping
         required = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
@@ -98,9 +98,9 @@ if uploaded_file:
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
-    # --- Deuxième onglet : "Sites éligible à un opérateur" ---
+    # --- Deuxième onglet : "Choisir une techno et un opérateur" ---
     with onglets[1]:
-        st.markdown("### Vue par choix de techno, opérateur et débit")
+        st.markdown("### Choisir une techno et un opérateur")
 
         # Choix de la technologie
         technos = df['Technologie'].dropna().unique()
