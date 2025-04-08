@@ -32,7 +32,7 @@ if uploaded_file:
         axis=1
     )
 
-    onglets = st.tabs(["Par choix de techno et débit", "Par choix techno et opérateur"])
+    onglets = st.tabs(["Prix et FAS opérateur le moins cher par site", "Choix d'un opérateur et débit"])
 
     with onglets[0]:
     # --- Vue par techno et débit ---
