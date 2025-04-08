@@ -33,7 +33,7 @@ if uploaded_file:
     )
 
     # Initialisation correcte des onglets
-    onglets = st.tabs(["Choisir la techno et le débit souhaités", "Choisir une techno et un opérateur"])
+    onglets = st.tabs(["Choisir la techno et le débit souhaités", "Choisir une techno et un opérateur", "Construire son résultat par site"])
 
     # --- Premier onglet : "Choisir la techno et le débit souhaités" ---
     with onglets[0]:
@@ -159,3 +159,58 @@ if uploaded_file:
                 file_name="offres_filtrees.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
+
+    # --- Troisième onglet : "Construire son résultat par site" ---
+    with onglets[2]:
+        st.markdown("### Construire son résultat par site")
+
+        # Liste des sites
+        sites = df['Site'].dropna().unique()
+
+        # Créer un tableau vide avec les colonnes souhaitées
+        result = pd.DataFrame({
+            'Site': sites,
+            'Technologie': [None] * len(sites),
+            'Opérateur': [None] * len(sites),
+            'Débit': [None] * len(sites),
+            'Frais d\'accès': [None] * len(sites),
+            'Prix mensuel': [None] * len(sites)
+        })
+
+        # Pour chaque site, créer des sélections pour la techno, opérateur et débit
+        for i, site in enumerate(sites):
+            # Sélection de la technologie
+            technos_disponibles = df[df['Site'] == site]['Technologie'].dropna().unique()
+            techno_choice = st.selectbox(f"Choisissez la technologie pour {site}", options=technos_disponibles, key=f"techno_{i}")
+            result.loc[i, 'Technologie'] = techno_choice
+
+            # Sélection de l'opérateur en fonction de la technologie choisie
+            operateurs_disponibles = df[(df['Site'] == site) & (df['Technologie'] == techno_choice)]['Opérateur'].dropna().unique()
+            operateur_choice = st.selectbox(f"Choisissez l'opérateur pour {site} ({techno_choice})", options=operateurs_disponibles, key=f"operateur_{i}")
+            result.loc[i, 'Opérateur'] = operateur_choice
+
+            # Sélection du débit en fonction de la techno et opérateur choisis
+            debits_disponibles = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice)]['Débit'].dropna().unique()
+            debit_choice = st.selectbox(f"Choisissez le débit pour {site} ({operateur_choice})", options=debits_disponibles, key=f"debit_{i}")
+            result.loc[i, 'Débit'] = debit_choice
+
+            # Calcul des frais d'accès et du prix mensuel
+            frais_acces = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice) & (df['Débit'] == debit_choice)]['Frais d\'accès'].values
+            prix_mensuel = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice) & (df['Débit'] == debit_choice)]['Prix mensuel'].values
+
+            result.loc[i, 'Frais d\'accès'] = frais_acces[0] if len(frais_acces) > 0 else 0
+            result.loc[i, 'Prix mensuel'] = prix_mensuel[0] if len(prix_mensuel) > 0 else 0
+
+        # Affichage du tableau interactif
+        st.dataframe(result, use_container_width=True)
+
+        # Export des résultats en Excel
+        output = BytesIO()
+        result.to_excel(output, index=False, engine='openpyxl')
+        output.seek(0)
+        st.download_button(
+            label="📥 Télécharger le fichier Excel",
+            data=output,
+            file_name="resultat_par_site.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
