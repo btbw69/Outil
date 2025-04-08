@@ -99,42 +99,49 @@ if uploaded_file:
                 )
 
     # --- Deuxième onglet : "Choisir une techno et un opérateur" ---
-    with onglets[1]:
-        st.markdown("### Choisir une techno et un opérateur")
+with onglets[1]:
+    st.markdown("### Vue par choix de techno, opérateur et débit")
 
-        # Choix de la technologie
-        technos = df['Technologie'].dropna().unique()
-        techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_2")
+    # Choix de la technologie
+    technos = df['Technologie'].dropna().unique()
+    techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_2")
 
-        # Filtrer les opérateurs selon la technologie choisie
-        operateurs = df[df['Technologie'] == techno_choice]['Opérateur'].dropna().unique()
-        operateur_choice = st.selectbox("Choisissez un opérateur", options=list(operateurs), key="operateur_choice_2")
+    # Filtrer les opérateurs selon la technologie choisie
+    operateurs = df[df['Technologie'] == techno_choice]['Opérateur'].dropna().unique()
+    operateur_choice = st.selectbox("Choisissez un opérateur", options=list(operateurs), key="operateur_choice_2")
 
-        # Appliquer les filtres selon techno et opérateur
-        df_filtered = df.copy()
-        df_filtered = df_filtered[df_filtered['Technologie'] == techno_choice]
-        df_filtered = df_filtered[df_filtered['Opérateur'] == operateur_choice]
+    # Filtrer les débits selon la technologie choisie
+    filtered_df_for_debit = df[df['Technologie'] == techno_choice]
+    debits = sorted(filtered_df_for_debit['Débit'].dropna().unique())
+    debit_options = list(debits)
+    debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options, key="debit_choice_2")
 
-        if df_filtered.empty:
-            st.warning("Aucune offre ne correspond aux critères sélectionnés.")
-        else:
-            # Nombre de sites éligibles pour l'opérateur et la technologie sélectionnés
-            nb_sites_operateur = df_filtered['Site'].nunique()
-            st.markdown(f"### Nombre de sites éligibles à {operateur_choice} pour la technologie {techno_choice} : {nb_sites_operateur}")
+    # Appliquer les filtres selon techno, opérateur et débit
+    df_filtered = df.copy()
+    df_filtered = df_filtered[df_filtered['Technologie'] == techno_choice]
+    df_filtered = df_filtered[df_filtered['Opérateur'] == operateur_choice]
+    df_filtered = df_filtered[df_filtered['Débit'] == debit_choice]
 
-            # Colonnes à afficher
-            colonnes_a_afficher = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
-            best_offers_reduits = df_filtered[colonnes_a_afficher]
+    if df_filtered.empty:
+        st.warning("Aucune offre ne correspond aux critères sélectionnés.")
+    else:
+        # Nombre de sites éligibles pour l'opérateur et la technologie sélectionnés
+        nb_sites_operateur = df_filtered['Site'].nunique()
+        st.markdown(f"### Nombre de sites éligibles à {operateur_choice} pour la technologie {techno_choice} : {nb_sites_operateur}")
 
-            st.dataframe(best_offers_reduits, use_container_width=True)
+        # Colonnes à afficher
+        colonnes_a_afficher = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
+        best_offers_reduits = df_filtered[colonnes_a_afficher]
 
-            # Export Excel
-            output = BytesIO()
-            best_offers_reduits.to_excel(output, index=False, engine='openpyxl')
-            output.seek(0)
-            st.download_button(
-                label="📥 Télécharger le fichier Excel",
-                data=output,
-                file_name="offres_filtrees.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+        st.dataframe(best_offers_reduits, use_container_width=True)
+
+        # Export Excel
+        output = BytesIO()
+        best_offers_reduits.to_excel(output, index=False, engine='openpyxl')
+        output.seek(0)
+        st.download_button(
+            label="📥 Télécharger le fichier Excel",
+            data=output,
+            file_name="offres_filtrees.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
