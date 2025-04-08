@@ -22,6 +22,10 @@ if uploaded_file:
 
     df = df.rename(columns=column_mapping)
 
+    # Exclure les lignes où Already Fiber == 'AvailableSoon'
+    if 'Already Fiber' in df.columns:
+        df = df[df['Already Fiber'] != 'AvailableSoon']
+
     # Remplacer les débits FTTH 1000M et 1000/200M par "1 gbits"
     df['Débit'] = df.apply(
         lambda row: '1 gbits' if row['Technologie'] == 'FTTH' and row['Débit'] in ['1000M', '1000/200M'] else row['Débit'],
