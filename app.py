@@ -43,17 +43,14 @@ if uploaded_file:
             st.error("Le fichier est invalide. Colonnes manquantes après mapping : " + ", ".join(missing_columns))
         else:
             technos = df['Technologie'].dropna().unique()
-            techno_choice = st.selectbox("Choisissez une technologie", options=["Toutes"] + list(technos))
+            techno_choice = st.selectbox("Choisissez une technologie", options=list(technos))
 
             engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36)
 
-            if techno_choice != "Toutes":
-                filtered_df_for_debit = df[df['Technologie'] == techno_choice]
-            else:
-                filtered_df_for_debit = df
+            filtered_df_for_debit = df[df['Technologie'] == techno_choice]
 
             debits = sorted(filtered_df_for_debit['Débit'].dropna().unique())
-            debit_options = ["Tous"] + list(debits)
+            debit_options = list(debits)
 
             # Fix pour éviter erreur si "1 gbits" non trouvé
             if techno_choice == "FTTH" and "1 gbits" in debit_options:
@@ -65,10 +62,8 @@ if uploaded_file:
 
             # Application des filtres (sans filtrer par engagement)
             df_filtered = df.copy()
-            if techno_choice != "Toutes":
-                df_filtered = df_filtered[df_filtered['Technologie'] == techno_choice]
-            if debit_choice != "Tous":
-                df_filtered = df_filtered[df_filtered['Débit'] == debit_choice]
+            df_filtered = df_filtered[df_filtered['Technologie'] == techno_choice]
+            df_filtered = df_filtered[df_filtered['Débit'] == debit_choice]
 
             if df_filtered.empty:
                 st.warning("Aucune offre ne correspond aux critères sélectionnés.")
