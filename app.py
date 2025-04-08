@@ -110,8 +110,8 @@ with onglets[1]:
     operateurs = df[df['Technologie'] == techno_choice]['Opérateur'].dropna().unique()
     operateur_choice = st.selectbox("Choisissez un opérateur", options=list(operateurs), key="operateur_choice_2")
 
-    # Filtrer les débits selon la technologie choisie
-    filtered_df_for_debit = df[df['Technologie'] == techno_choice]
+    # Filtrer les débits selon la technologie et l'opérateur choisis
+    filtered_df_for_debit = df[(df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice)]
     debits = sorted(filtered_df_for_debit['Débit'].dropna().unique())
     debit_options = list(debits)
     debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options, key="debit_choice_2")
@@ -131,17 +131,4 @@ with onglets[1]:
 
         # Colonnes à afficher
         colonnes_a_afficher = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
-        best_offers_reduits = df_filtered[colonnes_a_afficher]
-
-        st.dataframe(best_offers_reduits, use_container_width=True)
-
-        # Export Excel
-        output = BytesIO()
-        best_offers_reduits.to_excel(output, index=False, engine='openpyxl')
-        output.seek(0)
-        st.download_button(
-            label="📥 Télécharger le fichier Excel",
-            data=output,
-            file_name="offres_filtrees.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        best_offers_reduits = df_filtered[colonnes_a_aff_
