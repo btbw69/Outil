@@ -95,5 +95,44 @@ if uploaded_file:
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
-    with onglets[1]:
-        st.info("🚧 Cette vue sera bientôt disponible.")
+with onglets[1]:
+    st.markdown("### Vue par choix de techno, opérateur et débit")
+
+    # Choix de la technologie, opérateur et débit
+    technos = df['Technologie'].dropna().unique()
+    techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_2")
+
+    operateurs = df['Opérateur'].dropna().unique()
+    operateur_choice = st.selectbox("Choisissez un opérateur", options=list(operateurs), key="operateur_choice_2")
+
+    filtered_df_for_debit = df[df['Technologie'] == techno_choice]
+    debits = sorted(filtered_df_for_debit['Débit'].dropna().unique())
+    debit_options = list(debits)
+    debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options, key="debit_choice_2")
+
+    # Appliquer les filtres selon techno, opérateur et débit
+    df_filtered = df.copy()
+    df_filtered = df_filtered[df_filtered['Technologie'] == techno_choice]
+    df_filtered = df_filtered[df_filtered['Opérateur'] == operateur_choice]
+    df_filtered = df_filtered[df_filtered['Débit'] == debit_choice]
+
+    if df_filtered.empty:
+        st.warning("Aucune offre ne correspond aux critères sélectionnés.")
+    else:
+        # Colonnes à afficher (mêmes que pour le 1er onglet)
+        colonnes_a_afficher = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
+        best_offers_reduits = df_filtered[colonnes_a_afficher]
+
+        st.subheader("Offres correspondant à vos critères")
+        st.dataframe(best_offers_reduits, use_container_width=True)
+
+        # Export Excel
+        output = BytesIO()
+        best_offers_reduits.to_excel(output, index=False, engine='openpyxl')
+        output.seek(0)
+        st.download_button(
+            label="📥 Télécharger le fichier Excel",
+            data=output,
+            file_name="offres_filtrees.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
