@@ -5,7 +5,7 @@ from io import BytesIO
 st.set_page_config(page_title="Exploitation des données d'éligibité", layout="wide")
 st.title("Exploitation des données d'éligibité")
 
-uploaded_file = st.file_uploader("Téléversez le fichier d'offres", type=[".xlsx"])
+uploaded_file = st.file_uploader("Télécharger l'excel de résultats d'éligibilité", type=[".xlsx"])
 
 if uploaded_file:
     df = pd.read_excel(uploaded_file)
@@ -32,7 +32,7 @@ if uploaded_file:
         axis=1
     )
 
-    onglets = st.tabs(["Par choix de techno et débit", "Par choix techno et opérateur"])
+    onglets = st.tabs(["FAS et Prix Opérateur le moins cher par site", "Sites éligible à un opérateur"])
 
     with onglets[0]:
     # --- Vue par techno et débit ---
