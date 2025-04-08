@@ -96,6 +96,9 @@ if uploaded_file:
                 st.dataframe(best_offers_reduits, use_container_width=True)
 
                 # Export Excel
+                output = BytesIO()
+                best_offers_reduits.to_excel(output, index=False, engine='openpyxl')
+                output.seek(0)
                 st.download_button(
                     label="📥 Télécharger le fichier Excel",
                     data=output,
