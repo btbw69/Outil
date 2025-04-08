@@ -88,7 +88,7 @@ if uploaded_file:
 
                 # Colonnes à afficher en fonction de l'état du bouton
                 if st.session_state.columns_visible:
-                    colonnes_a_afficher = df.columns.tolist()  # Afficher toutes les colonnes disponibles
+                    colonnes_a_afficher = [col for col in df.columns if col not in ['NDI', 'INSEECode', 'rivoli code', 'Available Copper Pair', 'Needed Coppoer Pair']]
                 else:
                     colonnes_a_afficher = ['Site', "Frais d'accès", 'Prix mensuel']
 
