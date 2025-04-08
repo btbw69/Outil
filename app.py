@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 
-st.set_page_config(page_title="Optimiseur d'offres Internet", layout="wide")
-st.title("Optimiseur d'offres Internet par site client")
+st.set_page_config(page_title="exploitation exportation éligibité", layout="wide")
+st.title("exploitation exportation éligibité par site client")
 
 uploaded_file = st.file_uploader("Téléversez le fichier d'offres", type=[".xlsx"])
 
