@@ -84,6 +84,7 @@ if uploaded_file:
 
                 # Bouton pour masquer ou afficher les colonnes
                 if st.button("Laisser que colonne prix" if st.session_state.columns_visible else "Afficher toutes les colonnes"):
+                    # Met à jour l'état immédiatement après le clic
                     st.session_state.columns_visible = not st.session_state.columns_visible
 
                 # Colonnes à afficher en fonction de l'état du bouton
