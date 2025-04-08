@@ -88,15 +88,15 @@ if uploaded_file:
 
         # Choix de la technologie, opérateur et débit
         technos = df['Technologie'].dropna().unique()
-        techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_2")
+        techno_choice = st.selectbox("Choisissez une technologie", options=list(technos))
 
         operateurs = df['Opérateur'].dropna().unique()
-        operateur_choice = st.selectbox("Choisissez un opérateur", options=list(operateurs), key="operateur_choice_2")
+        operateur_choice = st.selectbox("Choisissez un opérateur", options=list(operateurs))
 
         filtered_df_for_debit = df[df['Technologie'] == techno_choice]
         debits = sorted(filtered_df_for_debit['Débit'].dropna().unique())
         debit_options = list(debits)
-        debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options, key="debit_choice_2")
+        debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options)
 
         # Appliquer les filtres selon techno, opérateur et débit
         df_filtered = df.copy()
