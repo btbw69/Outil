@@ -125,11 +125,14 @@ with onglets[1]:
     if df_filtered.empty:
         st.warning("Aucune offre ne correspond aux critères sélectionnés.")
     else:
+        # Nombre de sites éligibles pour l'opérateur sélectionné
+        nb_sites_operateur = df_filtered['Site'].nunique()
+        st.markdown(f"### Nombre de sites éligibles à {operateur_choice} : {nb_sites_operateur}")
+
         # Colonnes à afficher (mêmes que pour le 1er onglet)
         colonnes_a_afficher = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
         best_offers_reduits = df_filtered[colonnes_a_afficher]
 
-        st.subheader("Offres correspondant à vos critères")
         st.dataframe(best_offers_reduits, use_container_width=True)
 
         # Export Excel
