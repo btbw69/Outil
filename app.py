@@ -78,11 +78,21 @@ if uploaded_file:
                 nb_sites = best_offers['Site'].nunique()
                 st.markdown(f"### Nombre de sites éligibles à la {techno_choice} : {nb_sites}")
 
-                # Colonnes à exclure
-                colonnes_a_exclure = ['NDI', 'INSEECode', 'rivoli code', 'Available Copper Pair', 'Needed Coppoer Pair']
-                colonnes_finales = [col for col in best_offers.columns if col not in colonnes_a_exclure]
+                # Initialisation de l'état du bouton
+                if 'columns_visible' not in st.session_state:
+                    st.session_state.columns_visible = True
 
-                best_offers_reduits = best_offers[colonnes_finales]
+                # Bouton pour masquer ou afficher les colonnes
+                if st.button("Laisser que colonne prix" if st.session_state.columns_visible else "Afficher toutes les colonnes"):
+                    st.session_state.columns_visible = not st.session_state.columns_visible
+
+                # Colonnes à afficher en fonction de l'état du bouton
+                if st.session_state.columns_visible:
+                    colonnes_a_afficher = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
+                else:
+                    colonnes_a_afficher = ['Site', "Frais d'accès", 'Prix mensuel']
+
+                best_offers_reduits = best_offers[colonnes_a_afficher]
 
                 st.subheader("Meilleures offres par site")
                 st.dataframe(best_offers_reduits, use_container_width=True)
