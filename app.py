@@ -32,9 +32,10 @@ if uploaded_file:
         axis=1
     )
 
-    onglets = st.tabs(["Par Choix de Techno et débit"])
+    onglets = st.tabs(["Par choix de techno et débit", "Par choix techno et opérateur"])
 
     with onglets[0]:
+    # --- Vue par techno et débit ---
         # Vérification post-mapping
         required = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
         missing_columns = [col for col in required if col not in df.columns]
@@ -95,13 +96,12 @@ if uploaded_file:
                 st.dataframe(best_offers_reduits, use_container_width=True)
 
                 # Export Excel
-                output = BytesIO()
-                best_offers_reduits.to_excel(output, index=False, engine='openpyxl')
-                output.seek(0)
-
                 st.download_button(
                     label="📥 Télécharger le fichier Excel",
                     data=output,
                     file_name="meilleures_offres.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
+
+    with onglets[1]:
+        st.info("🚧 Cette vue sera bientôt disponible.")
