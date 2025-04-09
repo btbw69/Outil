@@ -26,18 +26,22 @@ if uploaded_file:
     df = df.rename(columns=column_mapping)
 
     # Créer un tableau de base avec Ag-Grid
-    st.subheader("Tableau avec listes déroulantes simplifiées")
+    st.subheader("Tableau avec liste déroulante pour Technologie")
 
-    # Configuration de base d'Ag-Grid sans `editable=True` et `cellEditorParams`
+    # Configuration de base d'Ag-Grid avec la liste déroulante dans la colonne Technologie
     gb = GridOptionsBuilder.from_dataframe(df)
     
-    # Ajouter pagination
+    # Ajouter des listes déroulantes pour la colonne "Technologie"
+    gb.configure_column('Technologie', editable=True, cellEditor='agSelectCellEditor', 
+                        cellEditorParams={'values': ['FTTH', 'ADSL', 'VDSL', 'Fibre']})
+
+    # Ajouter une pagination
     gb.configure_pagination()
 
     # Créer la configuration du tableau
     grid_options = gb.build()
 
-    # Affichage du tableau interactif Ag-Grid
+    # Affichage du tableau interactif Ag-Grid avec la liste déroulante dans "Technologie"
     grid_response = AgGrid(df, gridOptions=grid_options, update_mode='MODEL_CHANGED')
 
     # Récupérer les données modifiées après interaction
