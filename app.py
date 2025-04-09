@@ -143,8 +143,8 @@ if uploaded_file:
             nb_sites_operateur = df_filtered['Site'].nunique()
             st.markdown(f"### Nombre de sites éligibles à {operateur_choice} pour la technologie {techno_choice} : {nb_sites_operateur}")
 
-            # Colonnes à afficher
-            colonnes_a_afficher = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
+            # Colonnes à afficher (modification ici : "Frais d'accès" avant "Prix mensuel")
+            colonnes_a_afficher = ['Site', 'Opérateur', 'Technologie', 'Débit', "Frais d'accès", 'Prix mensuel']
             best_offers_reduits = df_filtered[colonnes_a_afficher]
 
             st.dataframe(best_offers_reduits, use_container_width=True)
