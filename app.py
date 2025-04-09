@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
-from st_aggrid import AgGrid, GridOptionsBuilder
 
 st.set_page_config(page_title="Exploitation des données d'éligibilité", layout="wide")
 st.title("Exploitation des données d'éligibilité")
@@ -97,12 +96,7 @@ if uploaded_file:
                 best_offers_reduits = best_offers[colonnes_a_afficher]
 
                 st.subheader("Meilleures offres par site")
-                
-                # Affichage avec AgGrid
-                grid_options = GridOptionsBuilder.from_dataframe(best_offers_reduits)
-                grid_options.configure_pagination(paginationAutoPageSize=True)
-                grid_options.configure_default_column(resizable=True)
-                grid_response = AgGrid(best_offers_reduits, gridOptions=grid_options.build(), update_mode='MODEL_CHANGED')
+                st.dataframe(best_offers_reduits, use_container_width=True)
 
                 # Export Excel
                 output = BytesIO()
@@ -152,12 +146,6 @@ if uploaded_file:
             # Colonnes à afficher
             colonnes_a_afficher = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
             best_offers_reduits = df_filtered[colonnes_a_afficher]
-
-            # Affichage avec AgGrid
-            grid_options = GridOptionsBuilder.from_dataframe(best_offers_reduits)
-            grid_options.configure_pagination(paginationAutoPageSize=True)
-            grid_options.configure_default_column(resizable=True)
-            grid_response = AgGrid(best_offers_reduits, gridOptions=grid_options.build(), update_mode='MODEL_CHANGED')
 
             st.dataframe(best_offers_reduits, use_container_width=True)
 
