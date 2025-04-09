@@ -25,26 +25,19 @@ if uploaded_file:
     }
     df = df.rename(columns=column_mapping)
 
-    # Créer un tableau de base avec Ag-Grid et des listes déroulantes
-    st.subheader("Tableau avec listes déroulantes")
+    # Créer un tableau de base avec Ag-Grid
+    st.subheader("Tableau avec listes déroulantes simplifiées")
 
-    # Configuration de base d'Ag-Grid avec des listes déroulantes
+    # Configuration de base d'Ag-Grid sans `editable=True` et `cellEditorParams`
     gb = GridOptionsBuilder.from_dataframe(df)
-
-    # Ajouter des listes déroulantes pour les colonnes Technologie, Opérateur, et Débit
-    gb.configure_column('Technologie', editable=True, cellEditor='agSelectCellEditor', 
-                        cellEditorParams={'values': ['FTTH', 'ADSL', 'VDSL', 'Fibre']})
-    gb.configure_column('Opérateur', editable=True, cellEditor='agSelectCellEditor', 
-                        cellEditorParams={'values': df['Opérateur'].dropna().unique()})
-    gb.configure_column('Débit', editable=True, cellEditor='agSelectCellEditor', 
-                        cellEditorParams={'values': df['Débit'].dropna().unique()})
-
-    # Ajouter une pagination
+    
+    # Ajouter pagination
     gb.configure_pagination()
 
+    # Créer la configuration du tableau
     grid_options = gb.build()
 
-    # Affichage du tableau interactif Ag-Grid avec les listes déroulantes
+    # Affichage du tableau interactif Ag-Grid
     grid_response = AgGrid(df, gridOptions=grid_options, update_mode='MODEL_CHANGED')
 
     # Récupérer les données modifiées après interaction
