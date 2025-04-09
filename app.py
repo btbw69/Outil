@@ -28,35 +28,30 @@ if uploaded_file:
     # Créer un tableau de base avec Ag-Grid
     st.subheader("Tableau avec listes déroulantes pour Technologie et Opérateur")
 
-    # Configuration de base d'Ag-Grid avec une seule liste déroulante pour la colonne Technologie
+    # Configuration de base d'Ag-Grid avec la liste déroulante pour Technologie
     gb = GridOptionsBuilder.from_dataframe(df)
 
     # Liste déroulante pour la colonne "Technologie"
     gb.configure_column('Technologie', editable=True, cellEditor='agSelectCellEditor', 
                         cellEditorParams={'values': ['FTTO', 'FTTH']})
-    
-    # Ajouter une pagination
-    gb.configure_pagination()
 
-    # Créer la configuration du tableau
+    # Affichage du tableau Ag-Grid avec la liste déroulante pour Technologie
     grid_options = gb.build()
-
-    # Affichage du tableau interactif Ag-Grid avec la liste déroulante dans "Technologie"
     grid_response = AgGrid(df, gridOptions=grid_options, update_mode='MODEL_CHANGED')
 
     # Récupérer les données modifiées après interaction
     updated_result = grid_response['data']
 
-    # Vérifier si une technologie a été sélectionnée
+    # Si une technologie a été sélectionnée, filtrer les opérateurs disponibles pour cette technologie
     if updated_result:
-        # Mettre à jour les opérateurs en fonction de la technologie choisie dans chaque ligne
+        # Pour chaque site, obtenir la technologie choisie et filtrer les opérateurs disponibles
         for idx, row in enumerate(updated_result):
             selected_techno = row['Technologie']  # Technologie sélectionnée pour chaque ligne
 
-            # Filtrer les opérateurs disponibles pour la technologie sélectionnée dans cette ligne
+            # Filtrer les opérateurs disponibles pour la technologie sélectionnée
             filtered_operators = df[df['Technologie'] == selected_techno]['Opérateur'].dropna().unique()
 
-            # Mettre à jour la cellule "Opérateur" pour cette ligne avec les opérateurs filtrés
+            # Mettre à jour la cellule "Opérateur" pour chaque ligne avec les opérateurs filtrés
             gb.configure_column('Opérateur', editable=True, cellEditor='agSelectCellEditor', 
                                 cellEditorParams={'values': filtered_operators})
 
