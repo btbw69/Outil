@@ -28,39 +28,37 @@ if uploaded_file:
     # Créer un tableau de base avec Ag-Grid
     st.subheader("Tableau avec listes déroulantes pour Technologie et Opérateur")
 
-    # Configuration de base d'Ag-Grid avec une seule liste déroulante pour la colonne Technologie
+    # Configuration de base d'Ag-Grid avec la liste déroulante pour Technologie
     gb = GridOptionsBuilder.from_dataframe(df)
 
     # Liste déroulante pour la colonne "Technologie"
     gb.configure_column('Technologie', editable=True, cellEditor='agSelectCellEditor', 
                         cellEditorParams={'values': ['FTTO', 'FTTH']})
-
-    # Afficher le tableau Ag-Grid avec les options de base
+    
+    # Afficher Ag-Grid avec la liste déroulante pour Technologie
     grid_options = gb.build()
     grid_response = AgGrid(df, gridOptions=grid_options, update_mode='MODEL_CHANGED')
 
     # Récupérer les données modifiées après interaction
     updated_result = grid_response['data']
 
-    # Si une technologie est choisie, filtrer les opérateurs disponibles pour cette technologie
+    # Vérifier si une technologie a été sélectionnée
     if updated_result:
         selected_techno = updated_result[0]['Technologie']  # Prendre la première ligne pour la technologie choisie
 
         # Filtrer les opérateurs disponibles pour la technologie sélectionnée
         filtered_operators = df[df['Technologie'] == selected_techno]['Opérateur'].dropna().unique()
 
-        # Ajouter la liste déroulante pour la colonne "Opérateur"
+        # Maintenant, ajouter la liste déroulante pour la colonne "Opérateur"
         gb.configure_column('Opérateur', editable=True, cellEditor='agSelectCellEditor', 
                             cellEditorParams={'values': filtered_operators})
 
-    # Créer la configuration du tableau avec la liste déroulante pour Opérateur
-    grid_options = gb.build()
+        # Recharger la grille avec la nouvelle configuration (Opérateur filtré)
+        grid_options = gb.build()
+        grid_response = AgGrid(df, gridOptions=grid_options, update_mode='MODEL_CHANGED')
 
-    # Affichage du tableau interactif Ag-Grid avec les listes déroulantes pour Technologie et Opérateur
-    grid_response = AgGrid(df, gridOptions=grid_options, update_mode='MODEL_CHANGED')
-
-    # Récupérer les données modifiées après interaction
-    updated_result = grid_response['data']
+        # Récupérer les données mises à jour
+        updated_result = grid_response['data']
 
     # Afficher le tableau mis à jour
     st.write("Tableau mis à jour avec les sélections :")
