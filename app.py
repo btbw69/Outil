@@ -69,7 +69,7 @@ if uploaded_file:
         grid_options = gb.build()
 
         # Affichage du tableau interactif Ag-Grid
-        grid_response = AgGrid(result, gridOptions=grid_options, enable_enterprise_modules=True, update_mode='MODEL_CHANGED')
+        grid_response = AgGrid(result, gridOptions=grid_options, update_mode='MODEL_CHANGED')
 
         # Récupérer les données modifiées après interaction
         updated_result = grid_response['data']
