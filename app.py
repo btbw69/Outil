@@ -2,15 +2,15 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 
-st.set_page_config(layout="wide")
-st.title("Exploitation des données d'éligibilité")
+st.set_page_config(page_title="Exploitation des données d'éligibité", layout="wide")
+st.title("Exploitation des données d'éligibité")
 
 uploaded_file = st.file_uploader("Téléversez le fichier d'offres", type=[".xlsx"])
 
 if uploaded_file:
     df = pd.read_excel(uploaded_file)
 
-    # Renommer les colonnes
+    # Mapping manuel à partir des noms réels (corrigé avec majuscules)
     column_mapping = {
         'Name': 'Site',
         'OBL': 'Opérateur',
@@ -19,6 +19,7 @@ if uploaded_file:
         'FASSellPrice': "Frais d'accès",
         'CRMSellPrice': 'Prix mensuel'
     }
+
     df = df.rename(columns=column_mapping)
 
     # Exclure les lignes où Already Fiber == 'AvailableSoon' ou 'UnderCommercialTerms'
@@ -178,22 +179,19 @@ if uploaded_file:
 
         # Pour chaque site, créer des sélections pour la techno, opérateur et débit
         for i, site in enumerate(sites):
-            # Affichage du numéro de site
-            site_number = f"Site {i+1}: {site}"
-
             # Sélection de la technologie
             technos_disponibles = df[df['Site'] == site]['Technologie'].dropna().unique()
-            techno_choice = st.selectbox(f"Choisissez la technologie pour {site_number}", options=technos_disponibles, key=f"techno_{i}")
+            techno_choice = st.selectbox(f"Choisissez la technologie pour {site}", options=technos_disponibles, key=f"techno_{i}")
             result.loc[i, 'Technologie'] = techno_choice
 
             # Sélection de l'opérateur en fonction de la technologie choisie
             operateurs_disponibles = df[(df['Site'] == site) & (df['Technologie'] == techno_choice)]['Opérateur'].dropna().unique()
-            operateur_choice = st.selectbox(f"Choisissez l'opérateur pour {site_number} ({techno_choice})", options=operateurs_disponibles, key=f"operateur_{i}")
+            operateur_choice = st.selectbox(f"Choisissez l'opérateur pour {site} ({techno_choice})", options=operateurs_disponibles, key=f"operateur_{i}")
             result.loc[i, 'Opérateur'] = operateur_choice
 
             # Sélection du débit en fonction de la techno et opérateur choisis
             debits_disponibles = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice)]['Débit'].dropna().unique()
-            debit_choice = st.selectbox(f"Choisissez le débit pour {site_number} ({operateur_choice})", options=debits_disponibles, key=f"debit_{i}")
+            debit_choice = st.selectbox(f"Choisissez le débit pour {site} ({operateur_choice})", options=debits_disponibles, key=f"debit_{i}")
             result.loc[i, 'Débit'] = debit_choice
 
             # Calcul des frais d'accès et du prix mensuel
