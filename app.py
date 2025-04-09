@@ -2,8 +2,8 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 
-st.set_page_config(page_title="Exploitation des données d'éligibité", layout="wide")
-st.title("Exploitation des données d'éligibité")
+st.set_page_config(page_title="Exploitation des données d'éligibilité", layout="wide")
+st.title("Exploitation des données d'éligibilité")
 
 uploaded_file = st.file_uploader("Téléversez le fichier d'offres", type=[".xlsx"])
 
@@ -33,11 +33,11 @@ if uploaded_file:
     )
 
     # Initialisation correcte des onglets
-    onglets = st.tabs(["Choisir la techno et le débit souhaités", "Choisir une techno et un opérateur", "Construire son résultat par site"])
+    onglets = st.tabs(["FAS/ABO le moins cher", "Site Eligible pour un opérateur", "Choix de la techno / opérateur / débit pour chaque site"])
 
-    # --- Premier onglet : "Choisir la techno et le débit souhaités" ---
+    # --- Premier onglet : "FAS/ABO le moins cher" ---
     with onglets[0]:
-        st.markdown("### Choisir la techno et le débit souhaités")
+        st.markdown("### FAS/ABO le moins cher")
 
         # Vérification post-mapping
         required = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
@@ -109,9 +109,9 @@ if uploaded_file:
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                 )
 
-    # --- Deuxième onglet : "Choisir une techno et un opérateur" ---
+    # --- Deuxième onglet : "Site Eligible pour un opérateur" ---
     with onglets[1]:
-        st.markdown("### Vue par choix de techno, opérateur et débit")
+        st.markdown("### Site Eligible pour un opérateur")
 
         # Choix de la technologie
         technos = df['Technologie'].dropna().unique()
@@ -160,9 +160,9 @@ if uploaded_file:
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
-    # --- Troisième onglet : "Construire son résultat par site" ---
+    # --- Troisième onglet : "Choix de la techno / opérateur / débit pour chaque site" ---
     with onglets[2]:
-        st.markdown("### Construire son résultat par site")
+        st.markdown("### Choix de la techno / opérateur / débit pour chaque site")
 
         # Liste des sites
         sites = df['Site'].dropna().unique()
