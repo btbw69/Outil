@@ -2,15 +2,15 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 
-st.set_page_config(page_title="Exploitation des données d'éligibité", layout="wide")
-st.title("Exploitation des données d'éligibité")
+st.set_page_config(layout="wide")
+st.title("Exploitation des données d'éligibilité")
 
 uploaded_file = st.file_uploader("Téléversez le fichier d'offres", type=[".xlsx"])
 
 if uploaded_file:
     df = pd.read_excel(uploaded_file)
 
-    # Mapping manuel à partir des noms réels (corrigé avec majuscules)
+    # Renommer les colonnes
     column_mapping = {
         'Name': 'Site',
         'OBL': 'Opérateur',
@@ -19,7 +19,6 @@ if uploaded_file:
         'FASSellPrice': "Frais d'accès",
         'CRMSellPrice': 'Prix mensuel'
     }
-
     df = df.rename(columns=column_mapping)
 
     # Exclure les lignes où Already Fiber == 'AvailableSoon' ou 'UnderCommercialTerms'
