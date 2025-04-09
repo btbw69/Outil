@@ -26,19 +26,37 @@ if uploaded_file:
     df = df.rename(columns=column_mapping)
 
     # Créer un tableau de base sans options complexes
-    st.subheader("Tableau simple avec Ag-Grid")
-    
-    # Configuration de base d'Ag-Grid
+    st.subheader("Tableau interactif avec listes déroulantes")
+
+    # Configuration de base d'Ag-Grid avec listes déroulantes
     gb = GridOptionsBuilder.from_dataframe(df)
-    gb.configure_pagination()  # Ajouter la pagination de base
+
+    # Ajouter des listes déroulantes pour les colonnes Technologie, Opérateur, et Débit
+    gb.configure_column('Technologie', editable=True, cellEditor='agSelectCellEditor', 
+                        cellEditorParams={'values': ['FTTH', 'ADSL', 'VDSL', 'Fibre']})
+    gb.configure_column('Opérateur', editable=True, cellEditor='agSelectCellEditor', 
+                        cellEditorParams={'values': df['Opérateur'].dropna().unique()})
+    gb.configure_column('Débit', editable=True, cellEditor='agSelectCellEditor', 
+                        cellEditorParams={'values': df['Débit'].dropna().unique()})
+
+    # Ajouter une pagination
+    gb.configure_pagination()
+
     grid_options = gb.build()
 
-    # Affichage du tableau interactif Ag-Grid
-    AgGrid(df, gridOptions=grid_options, update_mode='MODEL_CHANGED')
+    # Affichage du tableau interactif Ag-Grid avec les listes déroulantes
+    grid_response = AgGrid(df, gridOptions=grid_options, update_mode='MODEL_CHANGED')
+
+    # Récupérer les données modifiées après interaction
+    updated_result = grid_response['data']
+
+    # Afficher le tableau mis à jour
+    st.write("Tableau mis à jour avec les sélections :")
+    st.dataframe(updated_result)
 
     # Export des résultats en Excel
     output = BytesIO()
-    df.to_excel(output, index=False, engine='openpyxl')
+    updated_result.to_excel(output, index=False, engine='openpyxl')
     output.seek(0)
     st.download_button(
         label="📥 Télécharger le fichier Excel",
