@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
+import json
 
 st.set_page_config(page_title="Exploitation des données d'éligibilité", layout="wide")
 st.title("Exploitation des données d'éligibilité")
@@ -161,59 +162,87 @@ if uploaded_file:
             )
 
     # --- Troisième onglet : "Choix de la techno / opérateur / débit pour chaque site" ---
-    with onglets[2]:
-        st.markdown("### Choix de la techno / opérateur / débit pour chaque site")
+with onglets[2]:
+    st.markdown("### Choix de la techno / opérateur / débit pour chaque site")
 
-        # Liste des sites
-        sites = df['Site'].dropna().unique()
+    # Liste des sites
+    sites = df['Site'].dropna().unique()
 
-        # Créer un tableau vide avec les colonnes souhaitées
-        result = pd.DataFrame({
-            'Site': sites,
-            'Technologie': [None] * len(sites),
-            'Opérateur': [None] * len(sites),
-            'Débit': [None] * len(sites),
-            'Frais d\'accès': [None] * len(sites),
-            'Prix mensuel': [None] * len(sites)
-        })
+    # Créer un tableau vide avec les colonnes souhaitées
+    result = pd.DataFrame({
+        'Site': sites,
+        'Technologie': [None] * len(sites),
+        'Opérateur': [None] * len(sites),
+        'Débit': [None] * len(sites),
+        'Frais d\'accès': [None] * len(sites),
+        'Prix mensuel': [None] * len(sites)
+    })
 
-        # Pour chaque site, créer des sélections pour la techno, opérateur et débit
-        for i, site in enumerate(sites):
-            # Sélection de la technologie
-            technos_disponibles = df[df['Site'] == site]['Technologie'].dropna().unique()
-            techno_choice = st.selectbox(f"Choisissez la technologie pour {site}", options=technos_disponibles, key=f"techno_{i}")
-            result.loc[i, 'Technologie'] = techno_choice
+    # Pour chaque site, créer des sélections pour la techno, opérateur et débit
+    for i, site in enumerate(sites):
+        # Sélection de la technologie
+        technos_disponibles = df[df['Site'] == site]['Technologie'].dropna().unique()
+        techno_choice = st.selectbox(f"Choisissez la technologie pour {site}", options=technos_disponibles, key=f"techno_{i}")
+        result.loc[i, 'Technologie'] = techno_choice
 
-            # Sélection de l'opérateur en fonction de la technologie choisie
-            operateurs_disponibles = df[(df['Site'] == site) & (df['Technologie'] == techno_choice)]['Opérateur'].dropna().unique()
-            operateur_choice = st.selectbox(f"Choisissez l'opérateur pour {site} ({techno_choice})", options=operateurs_disponibles, key=f"operateur_{i}")
-            result.loc[i, 'Opérateur'] = operateur_choice
+        # Sélection de l'opérateur en fonction de la technologie choisie
+        operateurs_disponibles = df[(df['Site'] == site) & (df['Technologie'] == techno_choice)]['Opérateur'].dropna().unique()
+        operateur_choice = st.selectbox(f"Choisissez l'opérateur pour {site} ({techno_choice})", options=operateurs_disponibles, key=f"operateur_{i}")
+        result.loc[i, 'Opérateur'] = operateur_choice
 
-            # Sélection du débit en fonction de la techno et opérateur choisis
-            debits_disponibles = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice)]['Débit'].dropna().unique()
-            debit_choice = st.selectbox(f"Choisissez le débit pour {site} ({operateur_choice})", options=debits_disponibles, key=f"debit_{i}")
-            result.loc[i, 'Débit'] = debit_choice
+        # Sélection du débit en fonction de la techno et opérateur choisis
+        debits_disponibles = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice)]['Débit'].dropna().unique()
+        debit_choice = st.selectbox(f"Choisissez le débit pour {site} ({operateur_choice})", options=debits_disponibles, key=f"debit_{i}")
+        result.loc[i, 'Débit'] = debit_choice
 
-            # Calcul des frais d'accès et du prix mensuel
-            frais_acces = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice) & (df['Débit'] == debit_choice)]['Frais d\'accès'].values
-            prix_mensuel = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice) & (df['Débit'] == debit_choice)]['Prix mensuel'].values
+        # Calcul des frais d'accès et du prix mensuel
+        frais_acces = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice) & (df['Débit'] == debit_choice)]['Frais d\'accès'].values
+        prix_mensuel = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice) & (df['Débit'] == debit_choice)]['Prix mensuel'].values
 
-            result.loc[i, 'Frais d\'accès'] = frais_acces[0] if len(frais_acces) > 0 else 0
-            result.loc[i, 'Prix mensuel'] = prix_mensuel[0] if len(prix_mensuel) > 0 else 0
+        result.loc[i, 'Frais d\'accès'] = frais_acces[0] if len(frais_acces) > 0 else 0
+        result.loc[i, 'Prix mensuel'] = prix_mensuel[0] if len(prix_mensuel) > 0 else 0
 
-        # Affichage du tableau interactif
-        st.dataframe(result, use_container_width=True)
+    # Affichage du tableau interactif
+    st.dataframe(result, use_container_width=True)
 
-        # Export des résultats en Excel
-        output = BytesIO()
-        result.to_excel(output, index=False, engine='openpyxl')
-        output.seek(0)
-        st.download_button(
-            label="📥 Télécharger le fichier Excel",
-            data=output,
-            file_name="resultat_par_site.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+    # Sauvegarde du travail en cours
+    def save_work():
+        state = result.to_dict(orient='records')  # Convertir l'état actuel en liste de dictionnaires
+        with open('work_in_progress.json', 'w') as file:
+            json.dump(state, file)  # Sauvegarde dans un fichier JSON
+
+    # Charger le travail sauvegardé
+    def load_work():
+        try:
+            with open('work_in_progress.json', 'r') as file:
+                saved_state = json.load(file)  # Charger l'état sauvegardé
+            return pd.DataFrame(saved_state)  # Retourner un DataFrame avec l'état chargé
+        except FileNotFoundError:
+            st.warning("Aucun fichier de travail trouvé.")
+            return None
+
+    # Bouton pour sauvegarder le travail en cours
+    if st.button("Sauvegarder le travail en cours"):
+        save_work()
+        st.success("Travail sauvegardé.")
+
+    # Bouton pour charger le travail sauvegardé
+    if st.button("Charger le travail sauvegardé"):
+        loaded_data = load_work()
+        if loaded_data is not None:
+            result = loaded_data  # Charger l'état dans le tableau
+            st.success("Travail chargé avec succès.")
+
+    # Export des résultats en Excel
+    output = BytesIO()
+    result.to_excel(output, index=False, engine='openpyxl')
+    output.seek(0)
+    st.download_button(
+        label="📥 Télécharger le fichier Excel",
+        data=output,
+        file_name="resultat_par_site.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
     # --- Quatrième onglet : "proginov" ---
     with onglets[3]:
