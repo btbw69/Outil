@@ -34,7 +34,7 @@ if uploaded_file:
     )
 
     # Initialisation correcte des onglets
-    onglets = st.tabs(["FAS/ABO le moins cher", "Site Eligible pour un opérateur", "Choix de la techno / opérateur / débit pour chaque site", "proginov"])
+    onglets = st.tabs(["FAS/ABO le moins cher", "Site Eligible pour un opérateur", "Choix de la techno / opérateur / débit pour chaque site", "Proginov"])
 
     # --- Premier onglet : "FAS/ABO le moins cher" ---
     with onglets[0]:
@@ -47,16 +47,16 @@ if uploaded_file:
             st.error("Le fichier est invalide. Colonnes manquantes après mapping : " + ", ".join(missing_columns))
         else:
             technos = df['Technologie'].dropna().unique()
-            techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_1")
+            techno_choice = st.selectbox("Choisissez une technologie", options=list(technos))
 
-            engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_1")
+            engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36)
 
             filtered_df_for_debit = df[df['Technologie'] == techno_choice]
 
             debits = sorted(filtered_df_for_debit['Débit'].dropna().unique())
             debit_options = list(debits)
 
-            debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options, key="debit_choice_1")
+            debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options)
 
             # Application des filtres (sans filtrer par engagement)
             df_filtered = df.copy()
@@ -84,7 +84,7 @@ if uploaded_file:
                     st.session_state.columns_visible = True
 
                 # Bouton pour masquer ou afficher les colonnes
-                if st.button("Laisser que colonne prix" if st.session_state.columns_visible else "Afficher toutes les colonnes", key="button_1"):
+                if st.button("Laisser que colonne prix" if st.session_state.columns_visible else "Afficher toutes les colonnes"):
                     # Met à jour l'état immédiatement après le clic
                     st.session_state.columns_visible = not st.session_state.columns_visible
 
@@ -144,8 +144,8 @@ if uploaded_file:
             nb_sites_operateur = df_filtered['Site'].nunique()
             st.markdown(f"### Nombre de sites éligibles à {operateur_choice} pour la technologie {techno_choice} : {nb_sites_operateur}")
 
-            # Colonnes à afficher (modification ici : "Frais d'accès" avant "Prix mensuel")
-            colonnes_a_afficher = ['Site', 'Opérateur', 'Technologie', 'Débit', "Frais d'accès", 'Prix mensuel']
+            # Colonnes à afficher
+            colonnes_a_afficher = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
             best_offers_reduits = df_filtered[colonnes_a_afficher]
 
             st.dataframe(best_offers_reduits, use_container_width=True)
@@ -160,175 +160,26 @@ if uploaded_file:
                 file_name="offres_filtrees.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-# --- Troisième onglet : "Choix de la techno / opérateur / débit pour chaque site" ---
-with onglets[2]:
-    st.markdown("### Choix de la techno / opérateur / débit pour chaque site")
 
-    # Liste des sites
-    sites = df['Site'].dropna().unique()
+    # --- Troisième onglet : "Choix de la techno / opérateur / débit pour chaque site" ---
+    with onglets[2]:
+        st.markdown("### Choix de la techno / opérateur / débit pour chaque site")
 
-    # Créer un tableau vide avec les colonnes souhaitées
-    result = pd.DataFrame({
-        'Site': sites,
-        'Technologie': [None] * len(sites),
-        'Opérateur': [None] * len(sites),
-        'Débit': [None] * len(sites),
-        'Frais d\'accès': [None] * len(sites),
-        'Prix mensuel': [None] * len(sites)
-    })
+        # Liste des sites
+        sites = df['Site'].dropna().unique()
 
-    # Pour chaque site, créer des sélections pour la techno, opérateur et débit
-    for i, site in enumerate(sites):
-        # Sélection de la technologie
-        technos_disponibles = df[df['Site'] == site]['Technologie'].dropna().unique()
-        techno_choice = st.selectbox(f"Choisissez la technologie pour {site}", options=technos_disponibles, 
-                                     key=f"techno_{i}")
-        result.loc[i, 'Technologie'] = techno_choice
+        # Créer un tableau vide avec les colonnes souhaitées
+        result = pd.DataFrame({
+            'Site': sites,
+            'Technologie': [None] * len(sites),
+            'Opérateur': [None] * len(sites),
+            'Débit': [None] * len(sites),
+            'Frais d\'accès': [None] * len(sites),
+            'Prix mensuel': [None] * len(sites)
+        })
 
-        # Sélection de l'opérateur en fonction de la technologie choisie
-        operateurs_disponibles = df[(df['Site'] == site) & (df['Technologie'] == techno_choice)]['Opérateur'].dropna().unique()
-        operateur_choice = st.selectbox(f"Choisissez l'opérateur pour {site} ({techno_choice})", options=operateurs_disponibles, 
-                                       key=f"operateur_{i}")
-        result.loc[i, 'Opérateur'] = operateur_choice
-
-        # Sélection du débit en fonction de la techno et opérateur choisis
-        debits_disponibles = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice)]['Débit'].dropna().unique()
-        debit_choice = st.selectbox(f"Choisissez le débit pour {site} ({operateur_choice})", options=debits_disponibles, 
-                                   key=f"debit_{i}")
-        result.loc[i, 'Débit'] = debit_choice
-
-        # Calcul des frais d'accès et du prix mensuel
-        frais_acces = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice) & (df['Débit'] == debit_choice)]['Frais d\'accès'].values
-        prix_mensuel = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice) & (df['Débit'] == debit_choice)]['Prix mensuel'].values
-
-        result.loc[i, 'Frais d\'accès'] = frais_acces[0] if len(frais_acces) > 0 else 0
-        result.loc[i, 'Prix mensuel'] = prix_mensuel[0] if len(prix_mensuel) > 0 else 0
-
-    # Affichage du tableau interactif
-    st.dataframe(result, use_container_width=True)
-
-    # **Sauvegarde du travail en cours** - Enregistrer l'état dans un fichier
-    def save_work():
-        # Sauvegarder l'état sous forme de fichier JSON ou CSV
-        file_name = "work_in_progress.json"
-        with open(file_name, 'w') as f:
-            json.dump(result.to_dict(), f)
-        return file_name
-
-    save_button = st.button("Sauvegarder travail en cours")
-    if save_button:
-        file_name = save_work()
-        st.success(f"Travail sauvegardé dans le fichier : {file_name}")
-        with open(file_name, 'rb') as f:
-            st.download_button(
-                label="📥 Télécharger le fichier de sauvegarde",
-                data=f,
-                file_name=file_name,
-                mime="application/json"
-            )
-
-    # **Charger le travail sauvegardé** - Charger l'état depuis un fichier
-    uploaded_file = st.file_uploader("Charger un travail sauvegardé", type=["json", "csv"])
-    if uploaded_file:
-        if uploaded_file.name.endswith(".json"):
-            # Charger l'état depuis un fichier JSON
-            work_data = json.load(uploaded_file)
-            # Mettre à jour les données du tableau avec les données chargées
-            result = pd.DataFrame(work_data)
-            st.success("Travail chargé avec succès!")
-        elif uploaded_file.name.endswith(".csv"):
-            # Charger l'état depuis un fichier CSV
-            result = pd.read_csv(uploaded_file)
-            st.success("Travail chargé avec succès!")
-
-        st.dataframe(result, use_container_width=True)
-
-    # Export des résultats en Excel
-    output = BytesIO()
-    result.to_excel(output, index=False, engine='openpyxl')
-    output.seek(0)
-    st.download_button(
-        label="📥 Télécharger le fichier Excel",
-        data=output,
-        file_name="resultat_par_site.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-# --- Quatrième onglet : "proginov" ---
-with onglets[3]:
-    st.markdown("### Proginov")
-
-    # Exclure l'opérateur EuroFiber
-    df_filtered = df[df['Opérateur'] != 'EuroFiber']
-
-    technos = df_filtered['Technologie'].dropna().unique()
-    techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_proginov")
-
-    # Suppression du slicer de durée d'engagement (pas besoin ici)
-    # engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_proginov")
-
-    filtered_df_for_debit = df_filtered[df_filtered['Technologie'] == techno_choice]
-
-    debits = sorted(filtered_df_for_debit['Débit'].dropna().unique())
-    debit_options = list(debits)
-
-    debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options, key="debit_choice_proginov")
-
-    # Application des filtres (sans filtrer par engagement)
-    df_filtered = df_filtered[df_filtered['Technologie'] == techno_choice]
-    df_filtered = df_filtered[df_filtered['Débit'] == debit_choice]
-
-    # Calcul de la zone
-    def assign_zone(row):
-        if row['Technologie'] == 'FTTH':
-            if row['Opérateur'] == 'SFR':
-                return 'N10'
-            elif row['Opérateur'] == 'KOSC':
-                return 'N11'
-            elif row['Débit'] == '100/20(DG)M':
-                return 'N11'
-        elif row['Technologie'] == 'FTTO':
-            if row['Prix mensuel'] < 218:
-                return 'N1'
-            elif 218 <= row['Prix mensuel'] < 300:
-                return 'N2'
-            elif 300 <= row['Prix mensuel'] < 325:
-                return 'N3'
-            elif 325 <= row['Prix mensuel'] < 355:
-                return 'N4'
-            elif row['Prix mensuel'] >= 355:
-                return 'N5'
-        return 'Non défini'
-
-    df_filtered['Zone'] = df_filtered.apply(assign_zone, axis=1)
-
-    if df_filtered.empty:
-        st.warning("Aucune offre ne correspond aux critères sélectionnés.")
-    else:
-        # Remplissage des valeurs manquantes pour les frais d'accès
-        df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
-
-        # Calcul du coût total avec la valeur du slider (ou autre critère)
-        df_filtered['Coût total'] = df_filtered['Prix mensuel'] + df_filtered["Frais d'accès"]
-
-        # Sélection de l'offre la moins chère par site
-        best_offers = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
-
-        # Affichage du nombre de sites éligibles
-        nb_sites = best_offers['Site'].nunique()
-        st.markdown(f"### Nombre de sites éligibles à la {techno_choice} : {nb_sites}")
-
-        best_offers_reduits = best_offers[['Site', 'Technologie', 'Opérateur', 'Débit', 'Frais d\'accès', 'Prix mensuel', 'Zone']]
-
-        st.subheader("Meilleures offres par site")
-        st.dataframe(best_offers_reduits, use_container_width=True)
-
-        # Export Excel
-        output = BytesIO()
-        best_offers_reduits.to_excel(output, index=False, engine='openpyxl')
-        output.seek(0)
-        st.download_button(
-            label="📥 Télécharger le fichier Excel",
-            data=output,
-            file_name="meilleures_offres_proginov.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        # Pour chaque site, créer des sélections pour la techno, opérateur et débit
+        for i, site in enumerate(sites):
+            # Sélection de la technologie
+            technos_disponibles = df[df['Site'] == site]['Technologie'].dropna().unique()
+            techno_choice = st.selectbox(f"Choisissez la technologie pour {site
