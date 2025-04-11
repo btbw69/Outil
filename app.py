@@ -161,7 +161,8 @@ if uploaded_file:
             )
 
     # --- Troisième onglet : "Choix de la techno / opérateur / débit pour chaque site" ---
-    with onglets[2]:
+
+        with onglets[2]:
         st.markdown("### Choix de la techno / opérateur / débit pour chaque site")
 
         # Liste des sites
@@ -200,9 +201,6 @@ if uploaded_file:
 
             result.loc[i, 'Frais d\'accès'] = frais_acces[0] if len(frais_acces) > 0 else 0
             result.loc[i, 'Prix mensuel'] = prix_mensuel[0] if len(prix_mensuel) > 0 else 0
-
-        # Affichage du tableau interactif
-        st.dataframe(result, use_container_width=True)
 
         # Sauvegarde du travail en cours dans un fichier Excel
         def save_work():
