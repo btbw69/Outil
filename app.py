@@ -48,7 +48,7 @@ if uploaded_file:
             technos = df['Technologie'].dropna().unique()
             techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_1")
 
-            engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36)
+            engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_1")
 
             filtered_df_for_debit = df[df['Technologie'] == techno_choice]
 
@@ -215,78 +215,76 @@ if uploaded_file:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
-   # --- Quatrième onglet : "proginov" ---
-with onglets[3]:
-    st.markdown("### Proginov : FAS/ABO le moins cher sans EuroFiber")
+    # --- Quatrième onglet : "proginov" ---
+    with onglets[3]:
+        st.markdown("### Proginov : FAS/ABO le moins cher sans EuroFiber")
 
-    # Vérification post-mapping
-    required = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
-    missing_columns = [col for col in required if col not in df.columns]
-    if missing_columns:
-        st.error("Le fichier est invalide. Colonnes manquantes après mapping : " + ", ".join(missing_columns))
-    else:
-        technos = df['Technologie'].dropna().unique()
-        techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_4")
-
-        # Ajouter une clé unique pour le slider d'engagement
-        engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_4")
-
-        # Exclure EuroFiber
-        df_filtered_no_eurofiber = df[(df['Technologie'] == techno_choice) & (df['Opérateur'] != 'EuroFiber')]
-
-        debits = sorted(df_filtered_no_eurofiber['Débit'].dropna().unique())
-        debit_options = list(debits)
-
-        # Ajouter une clé unique pour le selectbox de débit
-        debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options, key="debit_choice_4")
-
-        # Application des filtres (sans filtrer par engagement)
-        df_filtered = df_filtered_no_eurofiber.copy()
-        df_filtered = df_filtered[df_filtered['Débit'] == debit_choice]
-
-        if df_filtered.empty:
-            st.warning("Aucune offre ne correspond aux critères sélectionnés.")
+        # Vérification post-mapping
+        required = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
+        missing_columns = [col for col in required if col not in df.columns]
+        if missing_columns:
+            st.error("Le fichier est invalide. Colonnes manquantes après mapping : " + ", ".join(missing_columns))
         else:
-            # Remplissage des valeurs manquantes pour les frais d'accès
-            df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
+            technos = df['Technologie'].dropna().unique()
+            techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_4")
 
-            # Calcul du coût total avec la valeur du slider
-            df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
+            engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_4")
 
-            # Sélection de l'offre la moins chère par site
-            best_offers = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
+            # Exclure EuroFiber
+            df_filtered_no_eurofiber = df[(df['Technologie'] == techno_choice) & (df['Opérateur'] != 'EuroFiber')]
 
-            # Affichage du nombre de sites éligibles
-            nb_sites = best_offers['Site'].nunique()
-            st.markdown(f"### Nombre de sites éligibles à la {techno_choice} : {nb_sites}")
+            debits = sorted(df_filtered_no_eurofiber['Débit'].dropna().unique())
+            debit_options = list(debits)
 
-            # Initialisation de l'état du bouton
-            if 'columns_visible' not in st.session_state:
-                st.session_state.columns_visible = True
+            debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options, key="debit_choice_4")
 
-            # Bouton pour masquer ou afficher les colonnes
-            if st.button("Laisser que colonne prix" if st.session_state.columns_visible else "Afficher toutes les colonnes"):
-                # Met à jour l'état immédiatement après le clic
-                st.session_state.columns_visible = not st.session_state.columns_visible
+            # Application des filtres (sans filtrer par engagement)
+            df_filtered = df_filtered_no_eurofiber.copy()
+            df_filtered = df_filtered[df_filtered['Débit'] == debit_choice]
 
-            # Colonnes à afficher en fonction de l'état du bouton
-            if st.session_state.columns_visible:
-                colonnes_a_afficher = [col for col in df.columns if col not in ['NDI', 'INSEECode', 'rivoli code', 'Available Copper Pair', 'Needed Coppoer Pair']]
+            if df_filtered.empty:
+                st.warning("Aucune offre ne correspond aux critères sélectionnés.")
             else:
-                colonnes_a_afficher = ['Site', "Frais d'accès", 'Prix mensuel']
+                # Remplissage des valeurs manquantes pour les frais d'accès
+                df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
 
-            best_offers_reduits = best_offers[colonnes_a_afficher]
+                # Calcul du coût total avec la valeur du slider
+                df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
 
-            st.subheader("Meilleures offres par site")
-            st.dataframe(best_offers_reduits, use_container_width=True)
+                # Sélection de l'offre la moins chère par site
+                best_offers = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
 
-            # Export Excel
-            output = BytesIO()
-            best_offers_reduits.to_excel(output, index=False, engine='openpyxl')
-            output.seek(0)
-            st.download_button(
-                label="📥 Télécharger le fichier Excel",
-                data=output,
-                file_name="meilleures_offres_proginov.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+                # Affichage du nombre de sites éligibles
+                nb_sites = best_offers['Site'].nunique()
+                st.markdown(f"### Nombre de sites éligibles à la {techno_choice} : {nb_sites}")
+
+                # Initialisation de l'état du bouton
+                if 'columns_visible' not in st.session_state:
+                    st.session_state.columns_visible = True
+
+                # Bouton pour masquer ou afficher les colonnes
+                if st.button("Laisser que colonne prix" if st.session_state.columns_visible else "Afficher toutes les colonnes"):
+                    # Met à jour l'état immédiatement après le clic
+                    st.session_state.columns_visible = not st.session_state.columns_visible
+
+                # Colonnes à afficher en fonction de l'état du bouton
+                if st.session_state.columns_visible:
+                    colonnes_a_afficher = [col for col in df.columns if col not in ['NDI', 'INSEECode', 'rivoli code', 'Available Copper Pair', 'Needed Coppoer Pair']]
+                else:
+                    colonnes_a_afficher = ['Site', "Frais d'accès", 'Prix mensuel']
+
+                best_offers_reduits = best_offers[colonnes_a_afficher]
+
+                st.subheader("Meilleures offres par site")
+                st.dataframe(best_offers_reduits, use_container_width=True)
+
+                # Export Excel
+                output = BytesIO()
+                best_offers_reduits.to_excel(output, index=False, engine='openpyxl')
+                output.seek(0)
+                st.download_button(
+                    label="📥 Télécharger le fichier Excel",
+                    data=output,
+                    file_name="meilleures_offres_proginov.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
