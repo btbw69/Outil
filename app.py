@@ -46,7 +46,7 @@ if uploaded_file:
             st.error("Le fichier est invalide. Colonnes manquantes après mapping : " + ", ".join(missing_columns))
         else:
             technos = df['Technologie'].dropna().unique()
-            techno_choice = st.selectbox("Choisissez une technologie", options=list(technos))
+            techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_1")
 
             engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36)
 
@@ -55,7 +55,7 @@ if uploaded_file:
             debits = sorted(filtered_df_for_debit['Débit'].dropna().unique())
             debit_options = list(debits)
 
-            debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options)
+            debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options, key="debit_choice_1")
 
             # Application des filtres (sans filtrer par engagement)
             df_filtered = df.copy()
@@ -226,7 +226,7 @@ if uploaded_file:
             st.error("Le fichier est invalide. Colonnes manquantes après mapping : " + ", ".join(missing_columns))
         else:
             technos = df['Technologie'].dropna().unique()
-            techno_choice = st.selectbox("Choisissez une technologie", options=list(technos))
+            techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_4")
 
             engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36)
 
@@ -236,7 +236,7 @@ if uploaded_file:
             debits = sorted(df_filtered_no_eurofiber['Débit'].dropna().unique())
             debit_options = list(debits)
 
-            debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options)
+            debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options, key="debit_choice_4")
 
             # Application des filtres (sans filtrer par engagement)
             df_filtered = df_filtered_no_eurofiber.copy()
