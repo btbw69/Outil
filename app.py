@@ -225,8 +225,6 @@ if uploaded_file:
         technos = df_filtered['Technologie'].dropna().unique()
         techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_proginov")
 
-        engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_proginov")
-
         filtered_df_for_debit = df_filtered[df_filtered['Technologie'] == techno_choice]
 
         debits = sorted(filtered_df_for_debit['Débit'].dropna().unique())
@@ -269,7 +267,7 @@ if uploaded_file:
             df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
 
             # Calcul du coût total avec la valeur du slider
-            df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
+            df_filtered['Coût total'] = df_filtered['Prix mensuel'] + df_filtered["Frais d'accès"]
 
             # Sélection de l'offre la moins chère par site
             best_offers = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
@@ -293,4 +291,3 @@ if uploaded_file:
                 file_name="meilleures_offres_proginov.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
-
