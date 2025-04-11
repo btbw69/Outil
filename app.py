@@ -177,33 +177,6 @@ if uploaded_file:
             'Prix mensuel': [None] * len(sites)
         })
 
-        # Pour chaque site, créer des sélections pour la techno, opérateur et débit
-        for i, site in enumerate(sites):
-            # Sélection de la technologie
-            technos_disponibles = df[df['Site'] == site]['Technologie'].dropna().unique()
-            techno_choice = st.selectbox(f"Choisissez la technologie pour {site}", options=technos_disponibles, key=f"techno_{i}")
-            result.loc[i, 'Technologie'] = techno_choice
-
-            # Sélection de l'opérateur en fonction de la technologie choisie
-            operateurs_disponibles = df[(df['Site'] == site) & (df['Technologie'] == techno_choice)]['Opérateur'].dropna().unique()
-            operateur_choice = st.selectbox(f"Choisissez l'opérateur pour {site} ({techno_choice})", options=operateurs_disponibles, key=f"operateur_{i}")
-            result.loc[i, 'Opérateur'] = operateur_choice
-
-            # Sélection du débit en fonction de la techno et opérateur choisis
-            debits_disponibles = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice)]['Débit'].dropna().unique()
-            debit_choice = st.selectbox(f"Choisissez le débit pour {site} ({operateur_choice})", options=debits_disponibles, key=f"debit_{i}")
-            result.loc[i, 'Débit'] = debit_choice
-
-            # Calcul des frais d'accès et du prix mensuel
-            frais_acces = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice) & (df['Débit'] == debit_choice)]['Frais d\'accès'].values
-            prix_mensuel = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice) & (df['Débit'] == debit_choice)]['Prix mensuel'].values
-
-            result.loc[i, 'Frais d\'accès'] = frais_acces[0] if len(frais_acces) > 0 else 0
-            result.loc[i, 'Prix mensuel'] = prix_mensuel[0] if len(prix_mensuel) > 0 else 0
-
-        # Affichage du tableau interactif
-        st.dataframe(result, use_container_width=True)
-
         # Sauvegarde du travail en cours dans un fichier Excel
         def save_work():
             output = BytesIO()
@@ -231,6 +204,40 @@ if uploaded_file:
         if uploaded_file_for_loading:
             result = load_work(uploaded_file_for_loading)
             st.success("Travail chargé avec succès.")
+
+        # Pour chaque site, créer des sélections pour la techno, opérateur et débit
+        for i, site in enumerate(sites):
+            # Sélection de la technologie
+            technos_disponibles = df[df['Site'] == site]['Technologie'].dropna().unique()
+            techno_choice = st.selectbox(f"Choisissez la technologie pour {site}", options=technos_disponibles, key=f"techno_{i}")
+            result.loc[i, 'Technologie'] = techno_choice
+
+            # Sélection de l'opérateur en fonction de la technologie choisie
+            operateurs_disponibles = df[(df['Site'] == site) & (df['Technologie'] == techno_choice)]['Opérateur'].dropna().unique()
+            operateur_choice = st.selectbox(f"Choisissez l'opérateur pour {site} ({techno_choice})", options=operateurs_disponibles, key=f"operateur_{i}")
+            result.loc[i, 'Opérateur'] = operateur_choice
+
+            # Sélection du débit en fonction de la techno et opérateur choisis
+            debits_disponibles = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice)]['Débit'].dropna().unique()
+            debit_choice = st.selectbox(f"Choisissez le débit pour {site} ({operateur_choice})", options=debits_disponibles, key=f"debit_{i}")
+            result.loc[i, 'Débit'] = debit_choice
+
+            # Calcul des frais d'accès et du prix mensuel
+            frais_acces = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice) & (df['Débit'] == debit_choice)]['Frais d\'accès'].values
+            prix_mensuel = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice) & (df['Débit'] == debit_choice)]['Prix mensuel'].values
+
+            result.loc[i, 'Frais d\'accès'] = frais_acces[0] if len(frais_acces) > 0 else 0
+            result.loc[i, 'Prix mensuel'] = prix_mensuel[0] if len(prix_mensuel) > 0 else 0
+
+        # Affichage du tableau interactif
+        st.dataframe(result, use_container_width=True)
+
+        # Sauvegarder à nouveau après modifications
+        def save_after_editing():
+            output = BytesIO()
+            result.to_excel(output, index=False, engine='openpyxl')
+            output.seek(0)
+            return output
 
         # Export des résultats en Excel
         output = BytesIO()
