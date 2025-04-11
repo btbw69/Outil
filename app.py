@@ -224,6 +224,9 @@ with onglets[3]:
     technos = df_filtered['Technologie'].dropna().unique()
     techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_proginov")
 
+    # Suppression du slicer de durée d'engagement (pas besoin ici)
+    # engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_proginov")
+
     filtered_df_for_debit = df_filtered[df_filtered['Technologie'] == techno_choice]
 
     debits = sorted(filtered_df_for_debit['Débit'].dropna().unique())
