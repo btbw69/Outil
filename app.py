@@ -173,7 +173,7 @@ if uploaded_file:
             'Technologie': [None] * len(sites),
             'Opérateur': [None] * len(sites),
             'Débit': [None] * len(sites),
-            'Frais d\'accès': [None] * len(sites),
+            'Frais d'accès': [None] * len(sites),
             'Prix mensuel': [None] * len(sites)
         })
 
@@ -195,36 +195,25 @@ if uploaded_file:
             result.loc[i, 'Débit'] = debit_choice
 
             # Calcul des frais d'accès et du prix mensuel
-            frais_acces = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice) & (df['Débit'] == debit_choice)]['Frais d\'accès'].values
+            frais_acces = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice) & (df['Débit'] == debit_choice)]['Frais d'accès'].values
             prix_mensuel = df[(df['Site'] == site) & (df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice) & (df['Débit'] == debit_choice)]['Prix mensuel'].values
 
-            result.loc[i, 'Frais d\'accès'] = frais_acces[0] if len(frais_acces) > 0 else 0
+            result.loc[i, 'Frais d'accès'] = frais_acces[0] if len(frais_acces) > 0 else 0
             result.loc[i, 'Prix mensuel'] = prix_mensuel[0] if len(prix_mensuel) > 0 else 0
 
         # Affichage du tableau interactif
         st.dataframe(result, use_container_width=True)
 
-        # --- Boutons de sauvegarde et chargement ---
-        col1, col2 = st.columns([1, 1])
-
-        with col1:
-            if st.button("Sauvegarder le travail en cours"):
-                output = BytesIO()
-                result.to_excel(output, index=False, engine='openpyxl')
-                output.seek(0)
-                st.download_button(
-                    label="📥 Télécharger le fichier de travail sauvegardé",
-                    data=output,
-                    file_name="work_in_progress.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-                st.success("Travail sauvegardé.")
-
-        with col2:
-            uploaded_file_for_loading = st.file_uploader("Charger un travail sauvegardé", type=[".xlsx"], key="upload_work")
-            if uploaded_file_for_loading:
-                result = pd.read_excel(uploaded_file_for_loading, engine='openpyxl')
-                st.success("Travail chargé avec succès.")
+        # Export des résultats en Excel
+        output = BytesIO()
+        result.to_excel(output, index=False, engine='openpyxl')
+        output.seek(0)
+        st.download_button(
+            label="📥 Télécharger le fichier Excel",
+            data=output,
+            file_name="resultat_par_site.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
     # --- Quatrième onglet : "proginov" ---
     with onglets[3]:
@@ -289,7 +278,7 @@ if uploaded_file:
             nb_sites = best_offers['Site'].nunique()
             st.markdown(f"### Nombre de sites éligibles à la {techno_choice} : {nb_sites}")
 
-            best_offers_reduits = best_offers[['Site', 'Technologie', 'Opérateur', 'Débit', 'Frais d\'accès', 'Prix mensuel', 'Zone']]
+            best_offers_reduits = best_offers[['Site', 'Technologie', 'Opérateur', 'Débit', 'Frais d'accès', 'Prix mensuel', 'Zone']]
 
             st.subheader("Meilleures offres par site")
             st.dataframe(best_offers_reduits, use_container_width=True)
