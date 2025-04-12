@@ -201,6 +201,9 @@ if uploaded_file:
             result.loc[i, 'Frais d\'accès'] = frais_acces[0] if len(frais_acces) > 0 else 0
             result.loc[i, 'Prix mensuel'] = prix_mensuel[0] if len(prix_mensuel) > 0 else 0
 
+        # Affichage du tableau interactif
+        st.dataframe(result, use_container_width=True)
+
         # Sauvegarde du travail en cours dans un fichier Excel
         def save_work():
             output = BytesIO()
@@ -304,7 +307,7 @@ if uploaded_file:
             df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
 
             # Calcul du coût total avec la valeur du slider
-            df_filtered['Coût total'] = df_filtered['Prix mensuel'] + df_filtered["Frais d'accès"]
+            df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
 
             # Sélection de l'offre la moins chère par site
             best_offers = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
