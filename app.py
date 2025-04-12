@@ -40,7 +40,6 @@ if uploaded_file:
     # --- Premier onglet : "FAS/ABO le moins cher" ---
     with onglets[0]:
         st.markdown("### FAS/ABO le moins cher")
-
         # Vérification post-mapping
         required = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
         missing_columns = [col for col in required if col not in df.columns]
