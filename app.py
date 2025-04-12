@@ -161,7 +161,7 @@ if uploaded_file:
             )
 
     # --- Troisième onglet : "Choix de la techno / opérateur / débit pour chaque site" ---
-   with onglets[2]:
+    with onglets[2]:
         st.markdown("### Choix de la techno / opérateur / débit pour chaque site")
 
         # Liste des sites
@@ -204,42 +204,14 @@ if uploaded_file:
         # Affichage du tableau interactif
         st.dataframe(result, use_container_width=True)
 
-        # Sauvegarde du travail en cours dans un fichier Excel
-        def save_work():
-            output = BytesIO()
-            result.to_excel(output, index=False, engine='openpyxl')
-            output.seek(0)
-            return output
-
-        # Chargement du fichier sauvegardé
-        def load_work(uploaded_file):
-            loaded_data = pd.read_excel(uploaded_file, engine='openpyxl')
-            return loaded_data
-
-        # Sauvegarde à nouveau après modifications
-        def save_after_editing():
-            output = BytesIO()
-            result.to_excel(output, index=False, engine='openpyxl')
-            output.seek(0)
-            return output
-
-        # Export des résultats en Excel
-        output = BytesIO()
-        result.to_excel(output, index=False, engine='openpyxl')
-        output.seek(0)
-        st.download_button(
-            label="📥 Télécharger le fichier Excel",
-            data=output,
-            file_name="resultat_par_site.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-
         # --- Boutons de sauvegarde et chargement ---
         col1, col2 = st.columns([1, 1])
 
         with col1:
             if st.button("Sauvegarder le travail en cours"):
-                output = save_work()
+                output = BytesIO()
+                result.to_excel(output, index=False, engine='openpyxl')
+                output.seek(0)
                 st.download_button(
                     label="📥 Télécharger le fichier de travail sauvegardé",
                     data=output,
@@ -251,7 +223,7 @@ if uploaded_file:
         with col2:
             uploaded_file_for_loading = st.file_uploader("Charger un travail sauvegardé", type=[".xlsx"], key="upload_work")
             if uploaded_file_for_loading:
-                result = load_work(uploaded_file_for_loading)
+                result = pd.read_excel(uploaded_file_for_loading, engine='openpyxl')
                 st.success("Travail chargé avec succès.")
 
     # --- Quatrième onglet : "proginov" ---
