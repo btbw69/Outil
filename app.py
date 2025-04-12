@@ -161,7 +161,7 @@ if uploaded_file:
             )
 
     # --- Troisième onglet : "Choix de la techno / opérateur / débit pour chaque site" ---
-    with onglets[2]:
+   with onglets[2]:
         st.markdown("### Choix de la techno / opérateur / débit pour chaque site")
 
         # Liste des sites
@@ -213,7 +213,8 @@ if uploaded_file:
 
         # Chargement du fichier sauvegardé
         def load_work(uploaded_file):
-            return pd.read_excel(uploaded_file, engine='openpyxl')
+            loaded_data = pd.read_excel(uploaded_file, engine='openpyxl')
+            return loaded_data
 
         # Sauvegarde à nouveau après modifications
         def save_after_editing():
