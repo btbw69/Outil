@@ -1,14 +1,12 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
-import json
 
 st.set_page_config(page_title="Exploitation des données d'éligibilité", layout="wide")
 st.title("Exploitation des données d'éligibilité")
 
 uploaded_file = st.file_uploader("Téléversez le fichier d'offres", type=[".xlsx"])
 
-# Chargement du fichier Excel et préparation des données
 if uploaded_file:
     df = pd.read_excel(uploaded_file)
 
@@ -40,6 +38,7 @@ if uploaded_file:
     # --- Premier onglet : "FAS/ABO le moins cher" ---
     with onglets[0]:
         st.markdown("### FAS/ABO le moins cher")
+
         # Vérification post-mapping
         required = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
         missing_columns = [col for col in required if col not in df.columns]
