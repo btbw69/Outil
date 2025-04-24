@@ -35,6 +35,7 @@ if uploaded_file:
     # Initialisation correcte des onglets
     onglets = st.tabs(["FAS/ABO le moins cher", "Site Eligible pour un opérateur", "Choix de la techno / opérateur / débit pour chaque site", "proginov"])
 
+
     # --- Premier onglet : "FAS/ABO le moins cher" ---
     with onglets[0]:
         st.markdown("### FAS/ABO le moins cher")
