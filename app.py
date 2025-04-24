@@ -239,7 +239,7 @@ if uploaded_file:
         # Calcul de la zone
         def assign_zone(row):
             if row['Technologie'] == 'FTTH':
-                if row['Opérateur'] == 'SFR' and row['Opérateur'] == 'KOSC':
+                if 'SFR' in row['Opérateur'] and 'KOSC' in row['Opérateur']:
                     return 'SFR N10 Kosc N11'
                 elif row['Opérateur'] == 'SFR':
                     return 'N10'
