@@ -240,10 +240,10 @@ if uploaded_file:
 
         # Calcul de la zone
         def assign_zone(row):
-            # Si le site est éligible à SFR et KOSC
             if row['Technologie'] == 'FTTH':
+                # Vérifier si le site est éligible à SFR et Kosc
                 if row['Opérateur'] == 'SFR' and row['Site'] in df[df['Opérateur'] == 'KOSC']['Site'].values:
-                    return 'SFR N10 Kosc N11'  # Zone combinée SFR et Kosc
+                    return 'SFR N10 Kosc N11'
                 elif row['Opérateur'] == 'SFR':
                     return 'N10'
                 elif row['Opérateur'] == 'KOSC':
