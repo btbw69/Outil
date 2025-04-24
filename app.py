@@ -226,8 +226,6 @@ if uploaded_file:
         techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_proginov")
 
         # Suppression du slider
-        # engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_proginov")
-
         filtered_df_for_debit = df_filtered[df_filtered['Technologie'] == techno_choice]
 
         debits = sorted(filtered_df_for_debit['Débit'].dropna().unique())
@@ -263,4 +261,15 @@ if uploaded_file:
 
         df_filtered['Zone'] = df_filtered.apply(assign_zone, axis=1)
 
-       
+        st.dataframe(df_filtered, use_container_width=True)
+
+        # Export des résultats en Excel
+        output = BytesIO()
+        df_filtered.to_excel(output, index=False, engine='openpyxl')
+        output.seek(0)
+        st.download_button(
+            label="📥 Télécharger le fichier Excel",
+            data=output,
+            file_name="meilleures_offres_proginov.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
