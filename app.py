@@ -219,7 +219,7 @@ if uploaded_file:
         st.markdown("### Proginov")
 
         # Exclure l'opérateur EuroFiber
-        df_filtered = df[df['Opérateur'] != 'EuroFiber']
+        df_filtered = df[df['Opérateur'] != '0']
 
         technos = df_filtered['Technologie'].dropna().unique()
         techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_proginov")
