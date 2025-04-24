@@ -240,8 +240,11 @@ if uploaded_file:
 
         # Calcul de la zone
         def assign_zone(row):
+            # Si le site est éligible à SFR et KOSC
             if row['Technologie'] == 'FTTH':
-                if row['Opérateur'] == 'SFR':
+                if row['Opérateur'] == 'SFR' and row['Site'] in df[df['Opérateur'] == 'KOSC']['Site'].values:
+                    return 'SFR N10 Kosc N11'  # Zone combinée SFR et Kosc
+                elif row['Opérateur'] == 'SFR':
                     return 'N10'
                 elif row['Opérateur'] == 'KOSC':
                     return 'N11'
@@ -278,7 +281,7 @@ if uploaded_file:
             nb_sites = best_offers['Site'].nunique()
             st.markdown(f"### Nombre de sites éligibles à la {techno_choice} : {nb_sites}")
 
-            best_offers_reduits = best_offers[['Site', 'Technologie', 'Opérateur', 'Débit', 'Prix mensuel', 'Zone']]
+            best_offers_reduits = best_offers[['Site', 'Technologie', 'Opérateur', 'Débit', 'Frais d\'accès', 'Prix mensuel', 'Zone']]
 
             st.subheader("Meilleures offres par site")
             st.dataframe(best_offers_reduits, use_container_width=True)
