@@ -222,12 +222,8 @@ if uploaded_file:
         # Exclure l'opérateur EuroFiber
         df_filtered = df[df['Opérateur'] != 'EuroFiber']
 
-        technos = df_filtered['Technologie'].
-
-dropna().unique()
+        technos = df_filtered['Technologie'].dropna().unique()
         techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_proginov")
-
-        engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_proginov")
 
         filtered_df_for_debit = df_filtered[df_filtered['Technologie'] == techno_choice]
 
@@ -243,11 +239,11 @@ dropna().unique()
         # Calcul de la zone
         def assign_zone(row):
             if row['Technologie'] == 'FTTH':
-                if row['Opérateur'] == 'SFR':
+                if row['Opérateur'] == 'SFR' and row['Opérateur'] == 'KOSC':
+                    return 'SFR N10 Kosc N11'
+                elif row['Opérateur'] == 'SFR':
                     return 'N10'
                 elif row['Opérateur'] == 'KOSC':
-                    return 'N11'
-                elif row['Débit'] == '100/20(DG)M':
                     return 'N11'
             elif row['Technologie'] == 'FTTO':
                 if row['Prix mensuel'] < 218:
@@ -271,7 +267,7 @@ dropna().unique()
             df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
 
             # Calcul du coût total avec la valeur du slider
-            df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
+            df_filtered['Coût total'] = df_filtered['Prix mensuel'] + df_filtered["Frais d'accès"]
 
             # Sélection de l'offre la moins chère par site
             best_offers = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
