@@ -224,6 +224,7 @@ if uploaded_file:
         technos = df_filtered['Technologie'].dropna().unique()
         techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_proginov")
 
+        engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_proginov")
 
         filtered_df_for_debit = df_filtered[df_filtered['Technologie'] == techno_choice]
 
@@ -293,7 +294,7 @@ if uploaded_file:
             nb_sites = best_offers['Site'].nunique()
             st.markdown(f"### Nombre de sites éligibles à la {techno_choice} : {nb_sites}")
 
-            best_offers_reduits = best_offers[['Site', 'Technologie', 'Opérateur', 'CostArea', 'Débit', 'Frais d\'accès', 'Prix mensuel', 'Zone']]
+            best_offers_reduits = best_offers[['Site', 'Technologie', 'Opérateur', 'Débit', 'Frais d\'accès', 'Prix mensuel', 'Zone']]
 
             st.subheader("Meilleures offres par site")
             st.dataframe(best_offers_reduits, use_container_width=True)
