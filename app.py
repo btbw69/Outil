@@ -215,7 +215,7 @@ if uploaded_file:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
-    # --- Quatrième onglet : "proginov" ---
+ # --- Quatrième onglet : "proginov" ---
     with onglets[3]:
         st.markdown("### Proginov")
 
@@ -237,6 +237,18 @@ if uploaded_file:
         # Application des filtres (sans filtrer par engagement)
         df_filtered = df_filtered[df_filtered['Technologie'] == techno_choice]
         df_filtered = df_filtered[df_filtered['Débit'] == debit_choice]
+
+        # Sélectionner les opérateurs disponibles
+        available_operators = df_filtered['Opérateur'].dropna().unique()
+
+        # Création d'un dictionnaire pour stocker les cases à cocher pour chaque opérateur
+        operator_filter = {}
+        for operator in available_operators:
+            operator_filter[operator] = st.checkbox(f"Exclure {operator}", value=False)
+
+        # Exclure les opérateurs sélectionnés
+        excluded_operators = [operator for operator, exclude in operator_filter.items() if exclude]
+        df_filtered = df_filtered[~df_filtered['Opérateur'].isin(excluded_operators)]
 
         # Calcul de la zone
         def assign_zone(row):
