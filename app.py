@@ -17,7 +17,8 @@ if uploaded_file:
         'Type Physical Link': 'Technologie',
         'bandwidth': 'Débit',
         'FASSellPrice': "Frais d'accès",
-        'CRMSellPrice': 'Prix mensuel'
+        'CRMSellPrice': 'Prix mensuel',
+        'CostArea': 'CostArea'  # Ajout de la colonne CostArea
     }
 
     df = df.rename(columns=column_mapping)
@@ -215,12 +216,12 @@ if uploaded_file:
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
-   # --- Quatrième onglet : "proginov" ---
+    # --- Quatrième onglet : "proginov" ---
     with onglets[3]:
         st.markdown("### Proginov")
 
         # Exclure l'opérateur EuroFiber
-        df_filtered = df[df['Opérateur'] != '0']
+        df_filtered = df[df['Opérateur'] != 'EuroFiber']
 
         technos = df_filtered['Technologie'].dropna().unique()
         techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_proginov")
@@ -295,7 +296,7 @@ if uploaded_file:
             nb_sites = best_offers['Site'].nunique()
             st.markdown(f"### Nombre de sites éligibles à la {techno_choice} : {nb_sites}")
 
-            best_offers_reduits = best_offers[['Site', 'Technologie', 'Opérateur', 'Débit', 'Frais d\'accès', 'Prix mensuel', 'Zone']]
+            best_offers_reduits = best_offers[['Site', 'Technologie', 'Opérateur', 'CostArea', 'Débit', 'Frais d\'accès', 'Prix mensuel', 'Zone']]
 
             st.subheader("Meilleures offres par site")
             st.dataframe(best_offers_reduits, use_container_width=True)
