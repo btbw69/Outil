@@ -193,7 +193,7 @@ if uploaded_file:
                     return 'N0'
                 elif row['Prix mensuel'] <= 190:
                     return 'N1'
-                elif row['Prix mensuel'] <= 215:
+                elif row['Prix mensuel'] <= 218:
                     return 'N2'
                 elif row['Prix mensuel'] <= 245:
                     return 'N3'
