@@ -51,7 +51,6 @@ if uploaded_file:
         else:
             technos = df['Technologie'].dropna().unique()
             techno_choice = st.selectbox("Technologie", options=technos, key="techno1")
-            engagement = st.slider("Durée d'engagement", 12, 60, step=12, value=36, key="engagement1")
             df_filtered = df[df['Technologie'] == techno_choice]
             debits = sorted(df_filtered['Débit'].dropna().unique())
             debit_choice = st.selectbox("Débit", options=debits, key="debit1")
@@ -125,7 +124,6 @@ if uploaded_file:
         st.markdown("### Proginov")
         df_filtered = df[df['Opérateur'] != 'COMPLETEL']
         techno_choice = st.selectbox("Technologie", options=df_filtered['Technologie'].dropna().unique(), key="techno4")
-        engagement = st.slider("Engagement", 12, 60, step=12, value=36, key="engagement4")
         debit_choice = st.selectbox("Débit", options=sorted(df_filtered[df_filtered['Technologie'] == techno_choice]['Débit'].dropna().unique()), key="debit4")
         df_filtered = df_filtered[(df_filtered['Technologie'] == techno_choice) & (df_filtered['Débit'] == debit_choice)]
         available_operators = df_filtered['Opérateur'].dropna().unique()
@@ -172,7 +170,6 @@ if uploaded_file:
         st.markdown("### Proginov nouvelle zone")
         df_filtered = df[df['Opérateur'] != 'COMPLETEL']
         techno_choice = st.selectbox("Technologie", options=df_filtered['Technologie'].dropna().unique(), key="techno5")
-        engagement = st.slider("Engagement", 12, 60, step=12, value=36, key="engagement5")
         debit_choice = st.selectbox("Débit", options=sorted(df_filtered[df_filtered['Technologie'] == techno_choice]['Débit'].dropna().unique()), key="debit5")
         df_filtered = df_filtered[(df_filtered['Technologie'] == techno_choice) & (df_filtered['Débit'] == debit_choice)]
         available_operators = df_filtered['Opérateur'].dropna().unique()
