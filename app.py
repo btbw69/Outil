@@ -33,8 +33,13 @@ if uploaded_file:
         axis=1
     )
 
-    # Initialisation correcte des onglets
-    onglets = st.tabs(["FAS/ABO le moins cher", "Site Eligible pour un opérateur", "Choix de la techno / opérateur / débit pour chaque site", "proginov"])
+onglets = st.tabs([
+    "FAS/ABO le moins cher",
+    "Site Eligible pour un opérateur",
+    "Choix de la techno / opérateur / débit pour chaque site",
+    "proginov",
+    "Proginov nouvelle zone"
+])
 
     # --- Premier onglet : "FAS/ABO le moins cher" ---
     with onglets[0]:
