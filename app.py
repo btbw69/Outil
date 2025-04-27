@@ -169,14 +169,15 @@ if uploaded_file:
         sites = df['Site'].dropna().unique()
 
         # Créer un tableau vide avec les colonnes souhaitées
-        result = pd.DataFrame({
-            'Site': sites,
-            'Technologie': [None] * len(sites),
-            'Opérateur': [None] * len(sites),
-            'Débit': [None] * len(sites),
-            'Frais d\'accès': [None] * len(sites),
-            'Prix mensuel': [None] * len(sites)
-        })
+result = pd.DataFrame({
+    'Site': sites,
+    'Technologie': [None] * len(sites),
+    'Opérateur': [None] * len(sites),
+    'Débit': [None] * len(sites),
+    "Frais d'accès": [None] * len(sites),
+    'Prix mensuel': [None] * len(sites)
+})
+
 
         # Pour chaque site, créer des sélections pour la techno, opérateur et débit
         for i, site in enumerate(sites):
