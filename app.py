@@ -149,39 +149,7 @@ if uploaded_file:
         output.seek(0)
         st.download_button("📥 Télécharger Excel", data=output, file_name="resultat_par_site.xlsx")
 
- # --- 4. Onglet Proginov ---
-with onglets[3]:
-    st.markdown("### Proginov")
-
-    # Exclure l'opérateur EuroFiber
-    df_filtered = df[df['Opérateur'] != 'COMPLETEL']
-
-    technos = df_filtered['Technologie'].dropna().unique()
-    techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_proginov")
-
-    engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_proginov")
-
-    filtered_df_for_debit = df_filtered[df_filtered['Technologie'] == techno_choice]
-
-    debits = sorted(filtered_df_for_debit['Débit'].dropna().unique())
-    debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debits, key="debit_choice_proginov")
-
-    # Application des filtres
-    df_filtered = df_filtered[df_filtered['Technologie'] == techno_choice]
-    df_filtered = df_filtered[df_filtered['Débit'] == debit_choice]
-
-    # Sélection des opérateurs disponibles
-    available_operators = df_filtered['Opérateur'].dropna().unique()
-
-    # Cases à cocher pour exclure opérateurs
-    operator_filter = {}
-    for operator in available_operators:
-        operator_filter[operator] = st.checkbox(f"Exclure {operator}", value=False)
-
-    excluded_operators = [operator for operator, exclude in operator_filter.items() if exclude]
-    df_filtered = df_filtered[~df_filtered['Opérateur'].isin(excluded_operators)]
-
-    # Fonction d'assignation de zone
+    # Fonction d'assignation de zone pour Proginov
     def assign_zone(row):
         if row['Technologie'] == 'FTTH':
             ops_site = df[(df['Site'] == row['Site']) & (df['Technologie'] == 'FTTH')]['Opérateur'].unique()
@@ -206,87 +174,88 @@ with onglets[3]:
                 return 'N5'
         return 'Non défini'
 
-    if not df_filtered.empty:
-        df_filtered['Zone'] = df_filtered.apply(assign_zone, axis=1)
+    # --- 4. Onglet Proginov ---
+    with onglets[3]:
+        st.markdown("### Proginov")
 
-        df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
-        df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
+        df_filtered = df[df['Opérateur'] != 'COMPLETEL']
 
-        best_offers = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
+        technos = df_filtered['Technologie'].dropna().unique()
+        techno_choice = st.selectbox("Choisissez une technologie", options=technos, key="techno_choice_proginov")
 
-        nb_sites = best_offers['Site'].nunique()
-        st.markdown(f"### Nombre de sites éligibles à la {techno_choice} : {nb_sites}")
+        engagement = st.slider("Durée d'engagement (mois)", 12, 60, 36, key="engagement_proginov")
 
-        best_offers_reduits = best_offers[['Site', 'Technologie', 'Opérateur', 'CostArea', 'Débit', "Frais d'accès", 'Prix mensuel', 'Zone']]
+        df_filtered = df_filtered[df_filtered['Technologie'] == techno_choice]
+        debits = sorted(df_filtered['Débit'].dropna().unique())
+        debit_choice = st.selectbox("Choisissez un débit", options=debits, key="debit_choice_proginov")
+        df_filtered = df_filtered[df_filtered['Débit'] == debit_choice]
 
-        st.subheader("Meilleures offres par site")
-        st.dataframe(best_offers_reduits, use_container_width=True)
+        available_operators = df_filtered['Opérateur'].dropna().unique()
+        operator_filter = {}
+        for operator in available_operators:
+            operator_filter[operator] = st.checkbox(f"Exclure {operator}", value=False)
 
-        output = BytesIO()
-        best_offers_reduits.to_excel(output, index=False)
-        output.seek(0)
-        st.download_button(
-            label="📥 Télécharger le fichier Excel",
-            data=output,
-            file_name="meilleures_offres_proginov.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-    else:
-        st.warning("Aucune offre ne correspond aux critères sélectionnés.")
+        excluded_operators = [operator for operator, exclude in operator_filter.items() if exclude]
+        df_filtered = df_filtered[~df_filtered['Opérateur'].isin(excluded_operators)]
 
-# --- 5. Onglet Proginov nouvelle zone ---
-with onglets[4]:
-    st.markdown("### Proginov nouvelle zone")
+        if not df_filtered.empty:
+            df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
+            df_filtered['Zone'] = df_filtered.apply(assign_zone, axis=1)
+            df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
 
-    # Même logique que Proginov pour l'instant
-    df_filtered = df[df['Opérateur'] != 'COMPLETEL']
+            best_offers = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
 
-    technos = df_filtered['Technologie'].dropna().unique()
-    techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_proginov_nouvelle")
+            nb_sites = best_offers['Site'].nunique()
+            st.markdown(f"### {nb_sites} sites éligibles à la {techno_choice}")
 
-    engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_proginov_nouvelle")
+            colonnes = ['Site', 'Technologie', 'Opérateur', 'CostArea', 'Débit', "Frais d'accès", 'Prix mensuel', 'Zone']
+            st.dataframe(best_offers[colonnes], use_container_width=True)
 
-    filtered_df_for_debit = df_filtered[df_filtered['Technologie'] == techno_choice]
+            output = BytesIO()
+            best_offers[colonnes].to_excel(output, index=False)
+            output.seek(0)
+            st.download_button("📥 Télécharger Excel", data=output, file_name="meilleures_offres_proginov.xlsx")
 
-    debits = sorted(filtered_df_for_debit['Débit'].dropna().unique())
-    debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debits, key="debit_choice_proginov_nouvelle")
+    # --- 5. Onglet Proginov nouvelle zone ---
+    with onglets[4]:
+        st.markdown("### Proginov nouvelle zone")
 
-    # Application des filtres
-    df_filtered = df_filtered[df_filtered['Technologie'] == techno_choice]
-    df_filtered = df_filtered[df_filtered['Débit'] == debit_choice]
+        # Même comportement que Proginov pour l'instant (copié)
+        df_filtered = df[df['Opérateur'] != 'COMPLETEL']
 
-    available_operators = df_filtered['Opérateur'].dropna().unique()
-    operator_filter = {}
-    for operator in available_operators:
-        operator_filter[operator] = st.checkbox(f"Exclure {operator}", value=False, key=f"exclude_{operator}_nouvelle")
+        technos = df_filtered['Technologie'].dropna().unique()
+        techno_choice = st.selectbox("Choisissez une technologie", options=technos, key="techno_choice_proginov_nouvelle")
 
-    excluded_operators = [operator for operator, exclude in operator_filter.items() if exclude]
-    df_filtered = df_filtered[~df_filtered['Opérateur'].isin(excluded_operators)]
+        engagement = st.slider("Durée d'engagement (mois)", 12, 60, 36, key="engagement_proginov_nouvelle")
 
-    if not df_filtered.empty:
-        df_filtered['Zone'] = df_filtered.apply(assign_zone, axis=1)
+        df_filtered = df_filtered[df_filtered['Technologie'] == techno_choice]
+        debits = sorted(df_filtered['Débit'].dropna().unique())
+        debit_choice = st.selectbox("Choisissez un débit", options=debits, key="debit_choice_proginov_nouvelle")
+        df_filtered = df_filtered[df_filtered['Débit'] == debit_choice]
 
-        df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
-        df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
+        available_operators = df_filtered['Opérateur'].dropna().unique()
+        operator_filter = {}
+        for operator in available_operators:
+            operator_filter[operator] = st.checkbox(f"Exclure {operator}", value=False, key=f"exclude_{operator}_nouvelle")
 
-        best_offers = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
+        excluded_operators = [operator for operator, exclude in operator_filter.items() if exclude]
+        df_filtered = df_filtered[~df_filtered['Opérateur'].isin(excluded_operators)]
 
-        nb_sites = best_offers['Site'].nunique()
-        st.markdown(f"### Nombre de sites éligibles à la {techno_choice} : {nb_sites}")
+        if not df_filtered.empty:
+            df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
+            df_filtered['Zone'] = df_filtered.apply(assign_zone, axis=1)
+            df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
 
-        best_offers_reduits = best_offers[['Site', 'Technologie', 'Opérateur', 'CostArea', 'Débit', "Frais d'accès", 'Prix mensuel', 'Zone']]
+            best_offers = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
 
-        st.subheader("Meilleures offres par site")
-        st.dataframe(best_offers_reduits, use_container_width=True)
+            nb_sites = best_offers['Site'].nunique()
+            st.markdown(f"### {nb_sites} sites éligibles à la {techno_choice}")
 
-        output = BytesIO()
-        best_offers_reduits.to_excel(output, index=False)
-        output.seek(0)
-        st.download_button(
-            label="📥 Télécharger le fichier Excel",
-            data=output,
-            file_name="meilleures_offres_proginov_nouvelle_zone.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-    else:
-        st.warning("Aucune offre ne correspond aux critères sélectionnés.")
+            colonnes = ['Site', 'Technologie', 'Opérateur', 'CostArea', 'Débit', "Frais d'accès", 'Prix mensuel', 'Zone']
+            st.dataframe(best_offers[colonnes], use_container_width=True)
+
+            output = BytesIO()
+            best_offers[colonnes].to_excel(output, index=False)
+            output.seek(0)
+            st.download_button("📥 Télécharger Excel", data=output, file_name="meilleures_offres_proginov_nouvelle_zone.xlsx")
+
