@@ -209,6 +209,15 @@ if uploaded_file:
                 colonnes.insert(3, 'costArea')
 
             st.dataframe(best_offers[colonnes], use_container_width=True)
+            output = BytesIO()
+best_offers[colonnes].to_excel(output, index=False, engine='openpyxl')
+output.seek(0)
+st.download_button(
+    label="📥 Télécharger le fichier Excel",
+    data=output,
+    file_name="meilleures_offres_proginov.xlsx",  # pour l'onglet 4
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
 
     # --- Onglet 5 ---
     with onglets[4]:
@@ -268,3 +277,12 @@ if uploaded_file:
                 colonnes.insert(3, 'costArea')
 
             st.dataframe(best_offers[colonnes], use_container_width=True)
+            output = BytesIO()
+best_offers[colonnes].to_excel(output, index=False, engine='openpyxl')
+output.seek(0)
+st.download_button(
+    label="📥 Télécharger le fichier Excel",
+    data=output,
+    file_name="meilleures_offres_proginov_nouvelle_zone.xlsx",  # pour l'onglet 5
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
