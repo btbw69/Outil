@@ -191,7 +191,7 @@ if uploaded_file:
             elif row['Technologie'] == 'FTTO':
                 if row['Prix mensuel'] <= 180:
                     return 'N0'
-                elif row['Prix mensuel'] <= 190:
+                elif row['Prix mensuel'] <= 195:
                     return 'N1'
                 elif row['Prix mensuel'] <= 215:
                     return 'N2'
