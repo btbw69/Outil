@@ -320,3 +320,94 @@ if uploaded_file:
                 # --- Onglet 5 : Proginov Nouvelle Zone ---
     with onglets[4]:
         st.markdown("### Proginov Nouvelle Zone")
+        # Exclure l'opérateur EuroFiber
+        df_filtered = df[df['Opérateur'] != 'COMPLETEL']
+
+        technos = df_filtered['Technologie'].dropna().unique()
+        techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_proginov")
+
+        engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_proginov")
+
+        filtered_df_for_debit = df_filtered[df_filtered['Technologie'] == techno_choice]
+
+        debits = sorted(filtered_df_for_debit['Débit'].dropna().unique())
+        debit_options = list(debits)
+
+        debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options, key="debit_choice_proginov")
+
+        # Application des filtres (sans filtrer par engagement)
+        df_filtered = df_filtered[df_filtered['Technologie'] == techno_choice]
+        df_filtered = df_filtered[df_filtered['Débit'] == debit_choice]
+
+        # Sélectionner les opérateurs disponibles
+        available_operators = df_filtered['Opérateur'].dropna().unique()
+
+        # Création d'un dictionnaire pour stocker les cases à cocher pour chaque opérateur
+        operator_filter = {}
+        for operator in available_operators:
+            operator_filter[operator] = st.checkbox(f"Exclure {operator}", value=False)
+
+        # Exclure les opérateurs sélectionnés
+        excluded_operators = [operator for operator, exclude in operator_filter.items() if exclude]
+        df_filtered = df_filtered[~df_filtered['Opérateur'].isin(excluded_operators)]
+
+        # Calcul de la zone
+        def assign_zone(row):
+            if row['Technologie'] == 'FTTH':
+                # Vérifier si le site est éligible à SFR et Kosc
+                operateurs_du_site = df[(df['Site'] == row['Site']) & (df['Technologie'] == 'FTTH')]['Opérateur'].unique()
+
+                if 'SFR' in operateurs_du_site and 'KOSC' in operateurs_du_site:
+                    return 'SFR N10 Kosc N11'
+                elif row['Opérateur'] == 'SFR':
+                    return 'N10'
+                elif row['Opérateur'] == 'KOSC':
+                    return 'N11'
+                elif row['Débit'] == '100/20(DG)M':
+                    return 'N11'
+            elif row['Technologie'] == 'FTTO':
+                if row['Prix mensuel'] < 218:
+                    return 'N1'
+                elif 218 <= row['Prix mensuel'] < 300:
+                    return 'N2'
+                elif 300 <= row['Prix mensuel'] < 325:
+                    return 'N3'
+                elif 325 <= row['Prix mensuel'] < 355:
+                    return 'N4'
+                elif row['Prix mensuel'] >= 355:
+                    return 'N5'
+            return 'Non défini'
+
+        df_filtered['Zone'] = df_filtered.apply(assign_zone, axis=1)
+
+        if df_filtered.empty:
+            st.warning("Aucune offre ne correspond aux critères sélectionnés.")
+        else:
+            # Remplissage des valeurs manquantes pour les frais d'accès
+            df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
+
+            # Calcul du coût total avec la valeur du slider
+            df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
+
+            # Sélection de l'offre la moins chère par site
+            best_offers = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
+
+            # Affichage du nombre de sites éligibles
+            nb_sites = best_offers['Site'].nunique()
+            st.markdown(f"### Nombre de sites éligibles à la {techno_choice} : {nb_sites}")
+
+            best_offers_reduits = best_offers[['Site', 'Technologie', 'Opérateur', 'costArea', 'Débit', 'Frais d\'accès', 'Prix mensuel', 'Zone']]
+
+            st.subheader("Meilleures offres par site")
+            st.dataframe(best_offers_reduits, use_container_width=True)
+
+            # Export Excel
+            output = BytesIO()
+            best_offers_reduits.to_excel(output, index=False, engine='openpyxl')
+            output.seek(0)
+            st.download_button(
+                label="📥 Télécharger le fichier Excel",
+                data=output,
+                file_name="meilleures_offres_proginov.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
