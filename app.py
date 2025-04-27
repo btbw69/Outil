@@ -43,7 +43,7 @@ if uploaded_file:
 
     # Onglet 1 : FAS/ABO le moins cher
  with onglets[0]:
-        st.markdown("### FAS/ABO le moins cher")
+        st.markdown("FAS/ABO le moins cher")
 
         # Vérification post-mapping
         required = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
