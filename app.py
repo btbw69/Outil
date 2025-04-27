@@ -118,22 +118,52 @@ if uploaded_file:
     # Onglet 2 : Site Eligible pour un opérateur
     with onglets[1]:
         st.markdown("### Site Eligible pour un opérateur")
+ # Choix de la technologie
         technos = df['Technologie'].dropna().unique()
-        techno_choice = st.selectbox("Technologie", options=technos, key="techno2")
+        techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_2")
+
+        # Filtrer les opérateurs selon la technologie choisie
         operateurs = df[df['Technologie'] == techno_choice]['Opérateur'].dropna().unique()
-        operateur_choice = st.selectbox("Opérateur", options=operateurs, key="operateur2")
-        filtered = df[(df['Technologie'] == techno_choice) & (df['Opérateur'] == operateur_choice)]
-        debits = sorted(filtered['Débit'].dropna().unique())
-        debit_choice = st.selectbox("Débit", options=debits, key="debit2", index=debits.index('10M') if '10M' in debits else 0)
-        filtered = filtered[filtered['Débit'] == debit_choice]
-        if filtered.empty:
-            st.warning("Aucune offre.")
+        operateur_choice = st.selectbox("Choisissez un opérateur", options=list(operateurs), key="operateur_choice_2")
+
+        # Filtrer les débits selon la technologie choisie
+        filtered_df_for_debit = df[df['Technologie'] == techno_choice]
+        debits = sorted(filtered_df_for_debit['Débit'].dropna().unique())
+        debit_options = list(debits)
+
+        # Définir le débit par défaut sur 10M, si disponible
+        debit_choice = st.selectbox("Choisissez un débit (optionnel)", options=debit_options, key="debit_choice_2", 
+                                    index=debit_options.index('10M') if '10M' in debit_options else 0)
+
+        # Appliquer les filtres selon techno, opérateur et débit
+        df_filtered = df.copy()
+        df_filtered = df_filtered[df_filtered['Technologie'] == techno_choice]
+        df_filtered = df_filtered[df_filtered['Opérateur'] == operateur_choice]
+        df_filtered = df_filtered[df_filtered['Débit'] == debit_choice]
+
+        if df_filtered.empty:
+            st.warning("Aucune offre ne correspond aux critères sélectionnés.")
         else:
-            st.dataframe(filtered, use_container_width=True)
+            # Nombre de sites éligibles pour l'opérateur et la technologie sélectionnés
+            nb_sites_operateur = df_filtered['Site'].nunique()
+            st.markdown(f"### Nombre de sites éligibles à {operateur_choice} pour la technologie {techno_choice} : {nb_sites_operateur}")
+
+            # Colonnes à afficher (modification ici : "Frais d'accès" avant "Prix mensuel")
+            colonnes_a_afficher = ['Site', 'Opérateur', 'Technologie', 'Débit', "Frais d'accès", 'Prix mensuel']
+            best_offers_reduits = df_filtered[colonnes_a_afficher]
+
+            st.dataframe(best_offers_reduits, use_container_width=True)
+
+            # Export Excel
             output = BytesIO()
-            filtered.to_excel(output, index=False, engine='openpyxl')
+            best_offers_reduits.to_excel(output, index=False, engine='openpyxl')
             output.seek(0)
-            st.download_button("📥 Télécharger Excel", data=output, file_name="offres_filtrees.xlsx")
+            st.download_button(
+                label="📥 Télécharger le fichier Excel",
+                data=output,
+                file_name="offres_filtrees.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
 
     # Onglet 3 : Choix par site
     with onglets[2]:
