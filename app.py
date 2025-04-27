@@ -34,7 +34,7 @@ if uploaded_file:
 
     # Création des onglets
     onglets = st.tabs([
-        "FAS/ABO le moins cher",
+        "ABO le moins cher",
         "Site Eligible pour un opérateur",
         "Choix de la techno / opérateur / débit pour chaque site",
         "Proginov",
@@ -43,7 +43,7 @@ if uploaded_file:
 
     # Onglet 1 : FAS/ABO le moins cher
  with onglets[0]:
-        st.markdown("FAS/ABO le moins cher")
+        st.markdown("ABO le moins cher")
 
         # Vérification post-mapping
         required = ['Site', 'Opérateur', 'Technologie', 'Débit', 'Prix mensuel', "Frais d'accès"]
