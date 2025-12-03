@@ -266,22 +266,22 @@ if uploaded_file:
                 elif row['Opérateur'] == 'KOSC':
                     return 'N11'
             elif row['Technologie'] == 'FTTO':
-                if row['Prix mensuel'] <= 180:
+                if row['Prix mensuel'] <= 175:
                     return 'N0'
-                elif row['Prix mensuel'] <= 195:
+                elif row['Prix mensuel'] <= 198:
                     return 'N1'
-                elif row['Prix mensuel'] <= 215:
+                elif row['Prix mensuel'] <= 218:
                     return 'N2'
-                elif row['Prix mensuel'] <= 245:
+                elif row['Prix mensuel'] <= 248:
                     return 'N3'
-                elif row['Prix mensuel'] <= 280:
+                elif row['Prix mensuel'] <= 285:
                     return 'N4'
-                elif row['Prix mensuel'] <= 315:
+                elif row['Prix mensuel'] <= 318:
                     return 'N5'
-                elif row['Prix mensuel'] <= 365:
+                elif row['Prix mensuel'] <= 368:
                     return 'N6'
                 else:
-                    return 'N7'
+                    return 'HZ'
             return 'Non défini'
 
         df_filtered['Zone'] = df_filtered.apply(zone_nouvelle, axis=1)
