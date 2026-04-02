@@ -29,7 +29,7 @@ if uploaded_file:
 
     # Remplacer les débits FTTH 1000M et 1000/200M par "1 gbits"
     df['Débit'] = df.apply(
-        lambda row: '1 gbits' if row['Technologie'] == 'FTTH' and row['Débit'] in ['1000M', '1000/200M'] else row['Débit'],
+        lambda row: '1 gbits' if row['Technologie'] == 'FTTH' and row['Débit'] in ['1000M', '1000/500M'] else row['Débit'],
         axis=1
     )
 
