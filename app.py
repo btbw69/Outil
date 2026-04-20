@@ -247,7 +247,8 @@ if uploaded_file:
         if check_columns(df):
             engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_mtmd")
 
-            technos = sorted(df['Technologie'].dropna().unique())
+            ordre_techno = {'FTTO': 0, 'FTTH': 1}
+            technos = sorted(df['Technologie'].dropna().unique(), key=lambda t: ordre_techno.get(t, 99))
             st.markdown("**Sélectionnez les technologies :**")
             technos_cochees = [t for t in technos if st.checkbox(t, key=f"mtmd_techno_{t}")]
 
