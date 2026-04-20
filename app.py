@@ -129,9 +129,7 @@ def render_proginov_tab(df, zone_fn, key_prefix, filename):
     df_filtered['Coût total'] = df_filtered['Prix mensuel'] * 36 + df_filtered["Frais d'accès"]
 
     best = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
-    colonnes = ['Site', 'Technologie', 'Opérateur', 'Débit', "Frais d'accès", 'Prix mensuel', 'Zone']
-    if 'costArea' in best.columns:
-        colonnes.insert(3, 'costArea')
+    colonnes = ['Site', 'Technologie', 'Opérateur', 'Prix mensuel', 'Zone']
 
     st.dataframe(best[colonnes], use_container_width=True)
     download_excel(best[colonnes], filename, key=f"dl_{key_prefix}")
