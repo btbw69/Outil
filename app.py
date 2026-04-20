@@ -110,12 +110,12 @@ def render_proginov_tab(df, zone_fn, key_prefix, filename):
                                  options=df_base['Technologie'].dropna().unique(),
                                  key=f"techno_{key_prefix}")
     engagement = st.slider("Engagement", 12, 60, step=12, value=36, key=f"engagement_{key_prefix}")
-    debits = sorted(df_base[df_base['Technologie'] == techno_choice]['Débit'].dropna().unique())
-    debit_choice = st.selectbox("Débit", options=debits, key=f"debit_{key_prefix}")
+
+    debit_auto = '1 gbits' if techno_choice == 'FTTH' else '10M'
 
     df_filtered = df_base[
         (df_base['Technologie'] == techno_choice) &
-        (df_base['Débit'] == debit_choice)
+        (df_base['Débit'] == debit_auto)
     ].copy()
 
     available_operators = df_filtered['Opérateur'].dropna().unique()
