@@ -242,15 +242,15 @@ if uploaded_file:
             for i, site in enumerate(sites):
                 df_site = df[df['Site'] == site]
                 technos = df_site['Technologie'].dropna().unique()
-                techno = st.selectbox(f"Technologie {site}", options=technos, key=f"tech_{i}")
+                techno = st.selectbox(f"Technologie {site}", options=technos, key=f"s3_tech_{i}")
 
                 df_site_tech = df_site[df_site['Technologie'] == techno]
                 operateurs = df_site_tech['Opérateur'].dropna().unique()
-                operateur = st.selectbox(f"Opérateur {site}", options=operateurs, key=f"op_{i}")
+                operateur = st.selectbox(f"Opérateur {site}", options=operateurs, key=f"s3_op_{i}")
 
                 df_site_op = df_site_tech[df_site_tech['Opérateur'] == operateur]
                 debits = df_site_op['Débit'].dropna().unique()
-                debit = st.selectbox(f"Débit {site}", options=debits, key=f"debit_{i}")
+                debit = st.selectbox(f"Débit {site}", options=debits, key=f"s3_debit_{i}")
 
                 ligne = df_site_op[df_site_op['Débit'] == debit]
                 frais = ligne["Frais d'accès"].values[0] if not ligne.empty else 0
