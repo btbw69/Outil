@@ -12,12 +12,18 @@ def sort_debits(debits):
     """Trie les débits numériquement (ex: 5M, 10M, 100M) plutôt qu'alphabétiquement."""
     return sorted(debits, key=debit_key)
 
+ORDRE_TECHNO = {'FTTO': 0, 'FTTH': 1}
+
 def sort_df_by_debit(df, cols_avant_debit):
-    """Trie un DataFrame en triant la colonne Débit numériquement."""
+    """Trie un DataFrame : FTTO avant FTTH, puis débits numériquement."""
     df = df.copy()
     df['_debit_sort'] = df['Débit'].apply(debit_key)
-    df = df.sort_values(cols_avant_debit + ['_debit_sort']).drop(columns='_debit_sort')
-    return df
+    if 'Technologie' in df.columns:
+        df['_techno_sort'] = df['Technologie'].map(ORDRE_TECHNO).fillna(99)
+        df = df.sort_values(cols_avant_debit + ['_techno_sort', '_debit_sort']).drop(columns=['_debit_sort', '_techno_sort'])
+    else:
+        df = df.sort_values(cols_avant_debit + ['_debit_sort']).drop(columns='_debit_sort')
+    return df.reset_index(drop=True)
 
 st.set_page_config(page_title="Exploitation des données d'éligibilité", layout="wide")
 st.title("Exploitation des données d'éligibilité")
