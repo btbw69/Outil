@@ -1,6 +1,15 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
+import re
+
+
+def sort_debits(debits):
+    """Trie les débits numériquement (ex: 5M, 10M, 100M) plutôt qu'alphabétiquement."""
+    def debit_key(d):
+        m = re.search(r'\d+', str(d))
+        return int(m.group()) if m else 0
+    return sorted(debits, key=debit_key)
 
 st.set_page_config(page_title="Exploitation des données d'éligibilité", layout="wide")
 st.title("Exploitation des données d'éligibilité")
@@ -166,7 +175,7 @@ if uploaded_file:
             techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_1")
             engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_1")
 
-            debits = sorted(df[df['Technologie'] == techno_choice]['Débit'].dropna().unique())
+            debits = sort_debits(df[df['Technologie'] == techno_choice]['Débit'].dropna().unique())
             debit_choice = st.selectbox("Choisissez un débit", options=debits, key="debit_choice_1")
 
             df_filtered = df[(df['Technologie'] == techno_choice) & (df['Débit'] == debit_choice)].copy()
@@ -207,7 +216,7 @@ if uploaded_file:
             techno_choice = st.selectbox("Choisissez une technologie", options=list(technos), key="techno_choice_md")
             engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_md")
 
-            debits = sorted(df[df['Technologie'] == techno_choice]['Débit'].dropna().unique())
+            debits = sort_debits(df[df['Technologie'] == techno_choice]['Débit'].dropna().unique())
             st.markdown("**Sélectionnez les débits :**")
             debits_coches = [d for d in debits if st.checkbox(d, key=f"md_debit_{d}")]
 
@@ -249,7 +258,7 @@ if uploaded_file:
                 debits_coches = []
                 for techno in technos_cochees:
                     st.markdown(f"*{techno}*")
-                    debits_techno = sorted(df[df['Technologie'] == techno]['Débit'].dropna().unique())
+                    debits_techno = sort_debits(df[df['Technologie'] == techno]['Débit'].dropna().unique())
                     for d in debits_techno:
                         if st.checkbox(d, key=f"mtmd_debit_{techno}_{d}"):
                             debits_coches.append((techno, d))
@@ -288,7 +297,7 @@ if uploaded_file:
             operateurs = df[df['Technologie'] == techno_choice]['Opérateur'].dropna().unique()
             operateur_choice = st.selectbox("Choisissez un opérateur", options=list(operateurs), key="operateur_choice_2")
 
-            debits = sorted(df[df['Technologie'] == techno_choice]['Débit'].dropna().unique())
+            debits = sort_debits(df[df['Technologie'] == techno_choice]['Débit'].dropna().unique())
             debit_choice = st.selectbox("Choisissez un débit", options=debits, key="debit_choice_2",
                                         index=debits.index('10M') if '10M' in debits else 0)
 
