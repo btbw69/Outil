@@ -207,37 +207,29 @@ if uploaded_file:
             engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_md")
 
             debits = sorted(df[df['Technologie'] == techno_choice]['Débit'].dropna().unique())
-            debit_choice = st.selectbox("Choisissez un débit", options=debits, key="debit_choice_md")
+            st.markdown("**Sélectionnez les débits :**")
+            debits_coches = [d for d in debits if st.checkbox(d, key=f"md_debit_{d}")]
 
-            df_filtered = df[(df['Technologie'] == techno_choice) & (df['Débit'] == debit_choice)].copy()
-
-            if df_filtered.empty:
-                st.warning("Aucune offre ne correspond aux critères sélectionnés.")
+            if not debits_coches:
+                st.info("Cochez au moins un débit pour afficher les résultats.")
             else:
-                df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
-                df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
-                best_offers = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
+                df_filtered = df[(df['Technologie'] == techno_choice) & (df['Débit'].isin(debits_coches))].copy()
 
-                nb_sites = best_offers['Site'].nunique()
-                st.markdown(f"### Nombre de sites éligibles à la {techno_choice} : {nb_sites}")
-
-                if 'columns_visible_md' not in st.session_state:
-                    st.session_state.columns_visible_md = True
-
-                if st.button(
-                    "Laisser que colonne prix" if st.session_state.columns_visible_md else "Afficher toutes les colonnes",
-                    key="button_md"
-                ):
-                    st.session_state.columns_visible_md = not st.session_state.columns_visible_md
-
-                if st.session_state.columns_visible_md:
-                    colonnes_a_afficher = [c for c in best_offers.columns if c not in COLS_TO_HIDE]
+                if df_filtered.empty:
+                    st.warning("Aucune offre ne correspond aux critères sélectionnés.")
                 else:
-                    colonnes_a_afficher = ['Site', "Frais d'accès", 'Prix mensuel']
+                    df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
+                    df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
+                    best_offers = df_filtered.sort_values('Coût total').groupby(['Site', 'Débit']).first().reset_index()
+                    best_offers = best_offers.sort_values(['Site', 'Débit'])
 
-                st.subheader("Meilleures offres par site")
-                st.dataframe(best_offers[colonnes_a_afficher], use_container_width=True)
-                download_excel(best_offers[colonnes_a_afficher], "meilleures_offres_multi_debit.xlsx", key="dl_tab_md")
+                    nb_sites = best_offers['Site'].nunique()
+                    st.markdown(f"### Nombre de sites éligibles à la {techno_choice} : {nb_sites}")
+
+                    colonnes_a_afficher = ['Site', 'Débit', 'Opérateur', "Frais d'accès", 'Prix mensuel', 'Coût total']
+                    st.subheader("Meilleures offres par site et par débit")
+                    st.dataframe(best_offers[colonnes_a_afficher], use_container_width=True)
+                    download_excel(best_offers[colonnes_a_afficher], "meilleures_offres_multi_debit.xlsx", key="dl_tab_md")
 
     # Onglet 3 : Site Eligible pour un opérateur
     with onglets[2]:
