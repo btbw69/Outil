@@ -245,17 +245,22 @@ if uploaded_file:
             if not technos_cochees:
                 st.info("Cochez au moins une technologie pour afficher les débits.")
             else:
-                debits = sorted(df[df['Technologie'].isin(technos_cochees)]['Débit'].dropna().unique())
                 st.markdown("**Sélectionnez les débits :**")
-                debits_coches = [d for d in debits if st.checkbox(d, key=f"mtmd_debit_{d}")]
+                debits_coches = []
+                for techno in technos_cochees:
+                    st.markdown(f"*{techno}*")
+                    debits_techno = sorted(df[df['Technologie'] == techno]['Débit'].dropna().unique())
+                    for d in debits_techno:
+                        if st.checkbox(d, key=f"mtmd_debit_{techno}_{d}"):
+                            debits_coches.append((techno, d))
 
                 if not debits_coches:
                     st.info("Cochez au moins un débit pour afficher les résultats.")
                 else:
-                    df_filtered = df[
-                        (df['Technologie'].isin(technos_cochees)) &
-                        (df['Débit'].isin(debits_coches))
-                    ].copy()
+                    mask = pd.Series([False] * len(df), index=df.index)
+                    for techno, debit in debits_coches:
+                        mask |= (df['Technologie'] == techno) & (df['Débit'] == debit)
+                    df_filtered = df[mask].copy()
 
                     if df_filtered.empty:
                         st.warning("Aucune offre ne correspond aux critères sélectionnés.")
@@ -267,15 +272,11 @@ if uploaded_file:
                         nb_sites = best_offers['Site'].nunique()
                         st.markdown(f"### Nombre de sites éligibles : {nb_sites}")
 
-                        # Colonne pivot "Techno - Débit" avec "Opérateur - Prix€"
-                        best_offers['Colonne'] = best_offers['Technologie'] + ' - ' + best_offers['Débit']
-                        best_offers['Valeur'] = best_offers['Opérateur'] + ' - ' + best_offers['Prix mensuel'].astype(str) + '€'
-                        pivot = best_offers.pivot(index='Site', columns='Colonne', values='Valeur').reset_index()
-                        pivot.columns.name = None
-
+                        colonnes_a_afficher = ['Site', 'Technologie', 'Débit', 'Opérateur', "Frais d'accès", 'Prix mensuel', 'Coût total']
+                        best_offers = best_offers.sort_values(['Site', 'Technologie', 'Débit'])
                         st.subheader("Meilleures offres par site, technologie et débit")
-                        st.dataframe(pivot, use_container_width=True)
-                        download_excel(pivot, "meilleures_offres_multi_techno_debit.xlsx", key="dl_tab_mtmd")
+                        st.dataframe(best_offers[colonnes_a_afficher], use_container_width=True)
+                        download_excel(best_offers[colonnes_a_afficher], "meilleures_offres_multi_techno_debit.xlsx", key="dl_tab_mtmd")
 
     # Onglet 4 : Site Eligible pour un opérateur
     with onglets[3]:
