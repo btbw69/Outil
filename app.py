@@ -109,8 +109,6 @@ def render_proginov_tab(df, zone_fn, key_prefix, filename):
     techno_choice = st.selectbox("Technologie",
                                  options=df_base['Technologie'].dropna().unique(),
                                  key=f"techno_{key_prefix}")
-    engagement = st.slider("Engagement", 12, 60, step=12, value=36, key=f"engagement_{key_prefix}")
-
     debit_auto = '1 gbits' if techno_choice == 'FTTH' else '10M'
 
     df_filtered = df_base[
@@ -128,7 +126,7 @@ def render_proginov_tab(df, zone_fn, key_prefix, filename):
 
     df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
     df_filtered['Zone'] = df_filtered.apply(zone_fn, axis=1, ftth_ops=ftth_ops)
-    df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
+    df_filtered['Coût total'] = df_filtered['Prix mensuel'] * 36 + df_filtered["Frais d'accès"]
 
     best = df_filtered.sort_values('Coût total').groupby('Site').first().reset_index()
     colonnes = ['Site', 'Technologie', 'Opérateur', 'Débit', "Frais d'accès", 'Prix mensuel', 'Zone']
