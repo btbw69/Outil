@@ -4,12 +4,20 @@ from io import BytesIO
 import re
 
 
+def debit_key(d):
+    m = re.search(r'\d+', str(d))
+    return int(m.group()) if m else 0
+
 def sort_debits(debits):
     """Trie les débits numériquement (ex: 5M, 10M, 100M) plutôt qu'alphabétiquement."""
-    def debit_key(d):
-        m = re.search(r'\d+', str(d))
-        return int(m.group()) if m else 0
     return sorted(debits, key=debit_key)
+
+def sort_df_by_debit(df, cols_avant_debit):
+    """Trie un DataFrame en triant la colonne Débit numériquement."""
+    df = df.copy()
+    df['_debit_sort'] = df['Débit'].apply(debit_key)
+    df = df.sort_values(cols_avant_debit + ['_debit_sort']).drop(columns='_debit_sort')
+    return df
 
 st.set_page_config(page_title="Exploitation des données d'éligibilité", layout="wide")
 st.title("Exploitation des données d'éligibilité")
@@ -189,7 +197,7 @@ if uploaded_file:
                     df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
                     df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
                     best_offers = df_filtered.sort_values('Coût total').groupby(['Site', 'Débit']).first().reset_index()
-                    best_offers = best_offers.sort_values(['Site', 'Débit'])
+                    best_offers = sort_df_by_debit(best_offers, ['Site'])
 
                     nb_sites = best_offers['Site'].nunique()
                     st.markdown(f"### Nombre de sites éligibles à la {techno_choice} : {nb_sites}")
@@ -241,7 +249,7 @@ if uploaded_file:
                         st.markdown(f"### Nombre de sites éligibles : {nb_sites}")
 
                         colonnes_a_afficher = ['Site', 'Technologie', 'Débit', 'Opérateur', "Frais d'accès", 'Prix mensuel', 'Coût total']
-                        best_offers = best_offers.sort_values(['Site', 'Technologie', 'Débit'])
+                        best_offers = sort_df_by_debit(best_offers, ['Site', 'Technologie'])
                         st.subheader("Meilleures offres par site, technologie et débit")
                         st.dataframe(best_offers[colonnes_a_afficher], use_container_width=True)
                         download_excel(best_offers[colonnes_a_afficher], "meilleures_offres_multi_techno_debit.xlsx", key="dl_tab_mtmd")
