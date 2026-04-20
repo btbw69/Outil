@@ -157,7 +157,6 @@ if uploaded_file:
         "FAS/ABO le moins cher",
         "Site Eligible pour un opérateur",
         "Choix de la techno / opérateur / débit pour chaque site",
-        "Proginov",
         "Proginov nouvelle zone"
     ])
 
@@ -273,12 +272,7 @@ if uploaded_file:
             st.dataframe(result, use_container_width=True)
             download_excel(result, "choix_site.xlsx", label="📥 Télécharger Excel", key="dl_tab3")
 
-    # Onglet 4 : Proginov (ancienne zone)
+    # Onglet 4 : Proginov nouvelle zone
     with onglets[3]:
-        st.markdown("### Proginov")
-        render_proginov_tab(df, zone_classic, key_prefix="4", filename="proginov.xlsx")
-
-    # Onglet 5 : Proginov nouvelle zone
-    with onglets[4]:
         st.markdown("### Proginov nouvelle zone")
         render_proginov_tab(df, zone_nouvelle, key_prefix="5", filename="proginov_nouvelle_zone.xlsx")
