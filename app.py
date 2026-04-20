@@ -263,15 +263,19 @@ if uploaded_file:
                         df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
                         df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
                         best_offers = df_filtered.sort_values('Coût total').groupby(['Site', 'Technologie', 'Débit']).first().reset_index()
-                        best_offers = best_offers.sort_values(['Site', 'Technologie', 'Débit'])
 
                         nb_sites = best_offers['Site'].nunique()
                         st.markdown(f"### Nombre de sites éligibles : {nb_sites}")
 
-                        colonnes_a_afficher = ['Site', 'Technologie', 'Débit', 'Opérateur', "Frais d'accès", 'Prix mensuel', 'Coût total']
+                        # Colonne pivot "Techno - Débit" avec "Opérateur - Prix€"
+                        best_offers['Colonne'] = best_offers['Technologie'] + ' - ' + best_offers['Débit']
+                        best_offers['Valeur'] = best_offers['Opérateur'] + ' - ' + best_offers['Prix mensuel'].astype(str) + '€'
+                        pivot = best_offers.pivot(index='Site', columns='Colonne', values='Valeur').reset_index()
+                        pivot.columns.name = None
+
                         st.subheader("Meilleures offres par site, technologie et débit")
-                        st.dataframe(best_offers[colonnes_a_afficher], use_container_width=True)
-                        download_excel(best_offers[colonnes_a_afficher], "meilleures_offres_multi_techno_debit.xlsx", key="dl_tab_mtmd")
+                        st.dataframe(pivot, use_container_width=True)
+                        download_excel(pivot, "meilleures_offres_multi_techno_debit.xlsx", key="dl_tab_mtmd")
 
     # Onglet 4 : Site Eligible pour un opérateur
     with onglets[3]:
