@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
-from datetime import date
+from datetime import datetime
 import re
 
 
@@ -438,7 +438,7 @@ if uploaded_file:
 
             wb.save(buf)
             buf.seek(0)
-            filename = f"Résultat Zones Proginov_{date.today().strftime('%d-%m-%Y')}.xlsx"
+            filename = f"Résultat Zones Proginov_{datetime.now().strftime('%d-%m-%Y-%Hh%M')}.xlsx"
             st.download_button("📥 Télécharger Zonage Proginov", data=buf,
                                file_name=filename,
                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
