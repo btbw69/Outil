@@ -438,7 +438,7 @@ if uploaded_file:
 
             wb.save(buf)
             buf.seek(0)
-            filename = f"Résultat Zones Proginov_{date.today().strftime('%Y-%m-%d')}.xlsx"
+            filename = f"Résultat Zones Proginov_{date.today().strftime('%d-%m-%Y')}.xlsx"
             st.download_button("📥 Télécharger Zonage Proginov", data=buf,
                                file_name=filename,
                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
