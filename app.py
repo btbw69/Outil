@@ -345,12 +345,22 @@ if uploaded_file:
         if check_columns(df):
             ftth_ops = precompute_ftth_ops(df)
 
-            # FTTO : meilleur opérateur et zone par site
+            # FTTO : meilleur opérateur et zone par site avec priorité hors SFR/Orange
             df_ftto = df[(df['Opérateur'] != 'COMPLETEL') & (df['Technologie'] == 'FTTO') & (df['Débit'] == '10M')].copy()
             df_ftto["Frais d'accès"] = df_ftto["Frais d'accès"].fillna(0)
             df_ftto['Zone'] = df_ftto.apply(zone_nouvelle, axis=1, ftth_ops=ftth_ops)
             df_ftto['Coût total'] = df_ftto['Prix mensuel'] * 36 + df_ftto["Frais d'accès"]
-            best_ftto = df_ftto.sort_values('Coût total').groupby('Site').first().reset_index()[['Site', 'Opérateur', 'Zone']]
+
+            def best_ftto_for_site(grp):
+                preferred = grp[~grp['Opérateur'].isin(['SFR', 'Orange'])]
+                if not preferred.empty:
+                    return preferred.sort_values('Coût total').iloc[0]
+                sfr = grp[grp['Opérateur'] == 'SFR']
+                if not sfr.empty:
+                    return sfr.sort_values('Coût total').iloc[0]
+                return grp.sort_values('Coût total').iloc[0]
+
+            best_ftto = df_ftto.groupby('Site').apply(best_ftto_for_site).reset_index(drop=True)[['Site', 'Opérateur', 'Zone']]
             best_ftto.columns = ['Site', 'Opérateur FTTO', 'Zone FTTO']
 
             # Offres Burst éligibles FTTH Débit Garanti
