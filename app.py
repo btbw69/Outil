@@ -438,9 +438,10 @@ if uploaded_file:
                 ws.cell(row=i+3, column=7, value=row['Zone SG'])
 
             # Ajustement automatique de la largeur des colonnes
-            for col in ws.columns:
+            from openpyxl.utils import get_column_letter
+            for i, col in enumerate(ws.columns, 1):
                 max_len = max((len(str(cell.value)) if cell.value else 0) for cell in col)
-                ws.column_dimensions[col[0].column_letter].width = max_len + 3
+                ws.column_dimensions[get_column_letter(i)].width = max_len + 3
 
             wb.save(buf)
             buf.seek(0)
