@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
+from datetime import date
 import re
 
 
@@ -178,7 +179,7 @@ if uploaded_file:
         "Site Eligible pour un opérateur",
         "Choix de la techno / opérateur / débit pour chaque site",
         "Proginov",
-        "Proginov - Template"
+        "Proginov - Export Excel"
     ])
 
     # Onglet 1 : FAS/ABO le moins cher - Multi Débit
@@ -339,7 +340,7 @@ if uploaded_file:
 
     # Onglet 6 : Proginov - Template
     with onglets[5]:
-        st.markdown("### Proginov - Template")
+        st.markdown("### Proginov - Export Excel")
         if check_columns(df):
             ftth_ops = precompute_ftth_ops(df)
 
@@ -381,8 +382,6 @@ if uploaded_file:
 
             sg_data = best_ftto['Site'].apply(lambda s: pd.Series(get_ftth_sg_info(s), index=['Eligible SG', 'Zone SG']))
             best_ftto = pd.concat([best_ftto, sg_data], axis=1)
-
-            st.dataframe(best_ftto, use_container_width=True)
 
             # Export Excel avec mise en forme template
             from openpyxl import Workbook
@@ -439,7 +438,8 @@ if uploaded_file:
 
             wb.save(buf)
             buf.seek(0)
-            st.download_button("📥 Télécharger le template Excel", data=buf,
-                               file_name="proginov_template.xlsx",
+            filename = f"Résultat Zones Proginov_{date.today().strftime('%Y-%m-%d')}.xlsx"
+            st.download_button("📥 Télécharger Zonage Proginov", data=buf,
+                               file_name=filename,
                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                                key="dl_template")
