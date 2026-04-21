@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from io import BytesIO
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import re
 
 
@@ -438,7 +439,7 @@ if uploaded_file:
 
             wb.save(buf)
             buf.seek(0)
-            filename = f"Résultat Zones Proginov_{datetime.now().strftime('%d-%m-%Y-%Hh%M')}.xlsx"
+            filename = f"Résultat Zones Proginov_{datetime.now(ZoneInfo('Europe/Paris')).strftime('%d-%m-%Y-%Hh%M')}.xlsx"
             st.download_button("📥 Télécharger Zonage Proginov", data=buf,
                                file_name=filename,
                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
