@@ -360,7 +360,8 @@ if uploaded_file:
                     return sfr.sort_values('Coût total').iloc[0]
                 return grp.sort_values('Coût total').iloc[0]
 
-            best_ftto = df_ftto.groupby('Site').apply(best_ftto_for_site).reset_index(drop=True)[['Site', 'Opérateur', 'Zone']]
+            rows = [best_ftto_for_site(grp) for _, grp in df_ftto.groupby('Site')]
+            best_ftto = pd.DataFrame(rows)[['Site', 'Opérateur', 'Zone']].reset_index(drop=True)
             best_ftto.columns = ['Site', 'Opérateur FTTO', 'Zone FTTO']
 
             # Offres Burst éligibles FTTH Débit Garanti
