@@ -340,4 +340,57 @@ if uploaded_file:
     # Onglet 6 : Proginov - Template
     with onglets[5]:
         st.markdown("### Proginov - Template")
-        render_proginov_tab(df, zone_nouvelle, key_prefix="6", filename="proginov_template.xlsx")
+        if check_columns(df):
+            ftth_ops = precompute_ftth_ops(df)
+
+            # FTTO : meilleur opérateur et zone par site
+            df_ftto = df[(df['Opérateur'] != 'COMPLETEL') & (df['Technologie'] == 'FTTO') & (df['Débit'] == '10M')].copy()
+            df_ftto["Frais d'accès"] = df_ftto["Frais d'accès"].fillna(0)
+            df_ftto['Zone'] = df_ftto.apply(zone_nouvelle, axis=1, ftth_ops=ftth_ops)
+            df_ftto['Coût total'] = df_ftto['Prix mensuel'] * 36 + df_ftto["Frais d'accès"]
+            best_ftto = df_ftto.sort_values('Coût total').groupby('Site').first().reset_index()[['Site', 'Opérateur', 'Zone']]
+            best_ftto.columns = ['Site', 'Opérateur FTTO', 'Zone FTTO']
+
+            st.dataframe(best_ftto, use_container_width=True)
+
+            # Export Excel avec mise en forme template
+            from openpyxl import Workbook
+            from openpyxl.styles import Font, Alignment, PatternFill
+            from openpyxl.utils import get_column_letter
+
+            buf = BytesIO()
+            wb = Workbook()
+            ws = wb.active
+
+            # Styles
+            red_fill   = PatternFill("solid", fgColor="FF0000")
+            gray_fill  = PatternFill("solid", fgColor="BFBFBF")
+            bold       = Font(bold=True)
+            center     = Alignment(horizontal="center", vertical="center")
+
+            # Ligne 1 : en-têtes groupes
+            ws.merge_cells("A1:A2"); ws["A1"] = "Site"
+            ws["A1"].fill = gray_fill; ws["A1"].font = bold; ws["A1"].alignment = center
+
+            ws.merge_cells("B1:C1"); ws["B1"] = "FTTO"
+            ws["B1"].fill = red_fill; ws["B1"].font = bold; ws["B1"].alignment = center
+
+            # Ligne 2 : sous-en-têtes
+            for cell, val in [("B2", "Opérateur FTTO"), ("C2", "Zone FTTO")]:
+                ws[cell] = val
+                ws[cell].fill = red_fill
+                ws[cell].font = bold
+                ws[cell].alignment = center
+
+            # Données à partir de la ligne 3
+            for i, row in best_ftto.iterrows():
+                ws.cell(row=i+3, column=1, value=row['Site'])
+                ws.cell(row=i+3, column=2, value=row['Opérateur FTTO'])
+                ws.cell(row=i+3, column=3, value=row['Zone FTTO'])
+
+            wb.save(buf)
+            buf.seek(0)
+            st.download_button("📥 Télécharger le template Excel", data=buf,
+                               file_name="proginov_template.xlsx",
+                               mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                               key="dl_template")
