@@ -118,7 +118,7 @@ def zone_nouvelle(row, ftth_ops):
             return 'N4'
         if p <= 318:
             return 'N5'
-        if p <= 368:
+        if p <= 371:
             return 'N6'
         return 'HZ'
     return 'Non défini'
