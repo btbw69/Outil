@@ -437,6 +437,11 @@ if uploaded_file:
                 ws.cell(row=i+3, column=6, value=row['Eligible SG'])
                 ws.cell(row=i+3, column=7, value=row['Zone SG'])
 
+            # Ajustement automatique de la largeur des colonnes
+            for col in ws.columns:
+                max_len = max((len(str(cell.value)) if cell.value else 0) for cell in col)
+                ws.column_dimensions[col[0].column_letter].width = max_len + 3
+
             wb.save(buf)
             buf.seek(0)
             filename = f"Résultat Zones Proginov_{datetime.now(ZoneInfo('Europe/Paris')).strftime('%d-%m-%Y-%Hh%M')}.xlsx"
