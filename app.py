@@ -366,6 +366,22 @@ if uploaded_file:
             burst_data = best_ftto['Site'].apply(lambda s: pd.Series(get_burst_info(s), index=['Eligible DG', 'Zone DG']))
             best_ftto = pd.concat([best_ftto, burst_data], axis=1)
 
+            # FTTH Sans Garantie : SFR / KOSC
+            def get_ftth_sg_info(site):
+                ops = ftth_ops.get(site, set())
+                sfr = 'SFR' in ops
+                kosc = 'KOSC' in ops
+                if not sfr and not kosc:
+                    return 'Non', ''
+                if sfr and kosc:
+                    return 'Oui', 'SFR N10 Kosc N11'
+                if sfr:
+                    return 'Oui', 'SFR N10'
+                return 'Oui', 'KOSC N11'
+
+            sg_data = best_ftto['Site'].apply(lambda s: pd.Series(get_ftth_sg_info(s), index=['Eligible SG', 'Zone SG']))
+            best_ftto = pd.concat([best_ftto, sg_data], axis=1)
+
             st.dataframe(best_ftto, use_container_width=True)
 
             # Export Excel avec mise en forme template
@@ -380,6 +396,7 @@ if uploaded_file:
             red_fill    = PatternFill("solid", fgColor="FF0000")
             gray_fill   = PatternFill("solid", fgColor="BFBFBF")
             yellow_fill = PatternFill("solid", fgColor="FFFF00")
+            green_fill  = PatternFill("solid", fgColor="92D050")
             bold   = Font(bold=True)
             center = Alignment(horizontal="center", vertical="center")
 
@@ -393,12 +410,17 @@ if uploaded_file:
             ws.merge_cells("D1:E1"); ws["D1"] = "FTTH Débit Garanti"
             ws["D1"].fill = yellow_fill; ws["D1"].font = bold; ws["D1"].alignment = center
 
+            ws.merge_cells("F1:G1"); ws["F1"] = "FTTH Sans Garantie"
+            ws["F1"].fill = green_fill; ws["F1"].font = bold; ws["F1"].alignment = center
+
             # Ligne 2 : sous-en-têtes
             for cell, val, fill in [
                 ("B2", "Opérateur FTTO", red_fill),
                 ("C2", "Zone FTTO",      red_fill),
                 ("D2", "Eligible",       yellow_fill),
                 ("E2", "Zone",           yellow_fill),
+                ("F2", "Eligible",       green_fill),
+                ("G2", "Zone",           green_fill),
             ]:
                 ws[cell] = val
                 ws[cell].fill = fill
@@ -412,6 +434,8 @@ if uploaded_file:
                 ws.cell(row=i+3, column=3, value=row['Zone FTTO'])
                 ws.cell(row=i+3, column=4, value=row['Eligible DG'])
                 ws.cell(row=i+3, column=5, value=row['Zone DG'])
+                ws.cell(row=i+3, column=6, value=row['Eligible SG'])
+                ws.cell(row=i+3, column=7, value=row['Zone SG'])
 
             wb.save(buf)
             buf.seek(0)
