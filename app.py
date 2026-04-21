@@ -177,7 +177,8 @@ if uploaded_file:
         "FAS/ABO le moins cher - Multi Débit",
         "Site Eligible pour un opérateur",
         "Choix de la techno / opérateur / débit pour chaque site",
-        "Proginov"
+        "Proginov",
+        "Proginov - Template"
     ])
 
     # Onglet 1 : FAS/ABO le moins cher - Multi Débit
@@ -335,3 +336,8 @@ if uploaded_file:
     with onglets[4]:
         st.markdown("### Proginov")
         render_proginov_tab(df, zone_nouvelle, key_prefix="5", filename="proginov_nouvelle_zone.xlsx")
+
+    # Onglet 6 : Proginov - Template
+    with onglets[5]:
+        st.markdown("### Proginov - Template")
+        render_proginov_tab(df, zone_nouvelle, key_prefix="6", filename="proginov_template.xlsx")
