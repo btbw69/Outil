@@ -351,22 +351,37 @@ if uploaded_file:
             best_ftto = df_ftto.sort_values('Coût total').groupby('Site').first().reset_index()[['Site', 'Opérateur', 'Zone']]
             best_ftto.columns = ['Site', 'Opérateur FTTO', 'Zone FTTO']
 
+            # Offres Burst éligibles FTTH Débit Garanti
+            OFFRES_BURST = ['FIBRE IELO FTTO BURST', 'Covage FTTO Burst', 'EuroFiber Burst FTTO']
+
+            def get_burst_info(site):
+                if 'Eligibility Offer' not in df.columns:
+                    return 'Non', ''
+                lignes = df[(df['Site'] == site) & (df['Eligibility Offer'].isin(OFFRES_BURST))]
+                if lignes.empty:
+                    return 'Non', ''
+                obls = ' '.join(lignes['Opérateur'].dropna().unique()) + ' N11'
+                return 'Oui', obls
+
+            burst_data = best_ftto['Site'].apply(lambda s: pd.Series(get_burst_info(s), index=['Eligible DG', 'Zone DG']))
+            best_ftto = pd.concat([best_ftto, burst_data], axis=1)
+
             st.dataframe(best_ftto, use_container_width=True)
 
             # Export Excel avec mise en forme template
             from openpyxl import Workbook
             from openpyxl.styles import Font, Alignment, PatternFill
-            from openpyxl.utils import get_column_letter
 
             buf = BytesIO()
             wb = Workbook()
             ws = wb.active
 
             # Styles
-            red_fill   = PatternFill("solid", fgColor="FF0000")
-            gray_fill  = PatternFill("solid", fgColor="BFBFBF")
-            bold       = Font(bold=True)
-            center     = Alignment(horizontal="center", vertical="center")
+            red_fill    = PatternFill("solid", fgColor="FF0000")
+            gray_fill   = PatternFill("solid", fgColor="BFBFBF")
+            yellow_fill = PatternFill("solid", fgColor="FFFF00")
+            bold   = Font(bold=True)
+            center = Alignment(horizontal="center", vertical="center")
 
             # Ligne 1 : en-têtes groupes
             ws.merge_cells("A1:A2"); ws["A1"] = "Site"
@@ -375,18 +390,28 @@ if uploaded_file:
             ws.merge_cells("B1:C1"); ws["B1"] = "FTTO"
             ws["B1"].fill = red_fill; ws["B1"].font = bold; ws["B1"].alignment = center
 
+            ws.merge_cells("D1:E1"); ws["D1"] = "FTTH Débit Garanti"
+            ws["D1"].fill = yellow_fill; ws["D1"].font = bold; ws["D1"].alignment = center
+
             # Ligne 2 : sous-en-têtes
-            for cell, val in [("B2", "Opérateur FTTO"), ("C2", "Zone FTTO")]:
+            for cell, val, fill in [
+                ("B2", "Opérateur FTTO", red_fill),
+                ("C2", "Zone FTTO",      red_fill),
+                ("D2", "Eligible",       yellow_fill),
+                ("E2", "Zone",           yellow_fill),
+            ]:
                 ws[cell] = val
-                ws[cell].fill = red_fill
+                ws[cell].fill = fill
                 ws[cell].font = bold
                 ws[cell].alignment = center
 
             # Données à partir de la ligne 3
-            for i, row in best_ftto.iterrows():
+            for i, row in best_ftto.reset_index(drop=True).iterrows():
                 ws.cell(row=i+3, column=1, value=row['Site'])
                 ws.cell(row=i+3, column=2, value=row['Opérateur FTTO'])
                 ws.cell(row=i+3, column=3, value=row['Zone FTTO'])
+                ws.cell(row=i+3, column=4, value=row['Eligible DG'])
+                ws.cell(row=i+3, column=5, value=row['Zone DG'])
 
             wb.save(buf)
             buf.seek(0)
