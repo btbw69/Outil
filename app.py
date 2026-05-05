@@ -278,6 +278,31 @@ if uploaded_file:
         st.markdown("### FAS/ABO le moins cher - Différentes Marges")
         if check_columns(df):
             engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_dm")
+
+            # Marge actuelle
+            col_ma, _ = st.columns([1, 3])
+            with col_ma:
+                marge_actuelle = st.number_input("Marge Actuelle (%)", min_value=0.0, max_value=99.9, value=30.0, step=0.1, key="dm_marge_actuelle")
+
+            # Marges cibles dynamiques
+            if 'dm_marges' not in st.session_state:
+                st.session_state.dm_marges = [30.0]
+
+            st.markdown("**Marges cibles :**")
+            for i in range(len(st.session_state.dm_marges)):
+                col_val, col_btn = st.columns([1, 4])
+                with col_val:
+                    st.session_state.dm_marges[i] = st.number_input(
+                        f"Marge {i+1} (%)", min_value=0.0, max_value=99.9,
+                        value=st.session_state.dm_marges[i], step=0.1, key=f"dm_marge_{i}"
+                    )
+                with col_btn:
+                    if i == len(st.session_state.dm_marges) - 1:
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        if st.button("＋ Ajouter une marge", key="dm_add_marge"):
+                            st.session_state.dm_marges.append(30.0)
+                            st.rerun()
+
             ordre_techno = {'FTTO': 0, 'FTTH': 1}
             technos = sorted(df['Technologie'].dropna().unique(), key=lambda t: ordre_techno.get(t, 99))
             st.markdown("**Sélectionnez les technologies :**")
@@ -298,22 +323,37 @@ if uploaded_file:
                 if not debits_coches:
                     st.info("Cochez au moins un débit pour afficher les résultats.")
                 else:
+                    taux_actuel = marge_actuelle / 100
+
                     pivot = None
                     for techno, debit in debits_coches:
                         df_td = df[(df['Technologie'] == techno) & (df['Débit'] == debit)].copy()
                         df_td["Frais d'accès"] = df_td["Frais d'accès"].fillna(0)
+                        # Coût de revient = prix affiché × (1 - marge actuelle)
+                        df_td['cout_fas'] = df_td["Frais d'accès"] * (1 - taux_actuel)
+                        df_td['cout_abo'] = df_td['Prix mensuel'] * (1 - taux_actuel)
                         df_td['Coût total'] = df_td['Prix mensuel'] * engagement + df_td["Frais d'accès"]
-                        best = df_td.sort_values('Coût total').groupby('Site').first().reset_index()[['Site', 'Opérateur', "Frais d'accès", 'Prix mensuel']]
+                        best = df_td.sort_values('Coût total').groupby('Site').first().reset_index()
+
+                        bloc = best[['Site', 'Opérateur']].copy()
                         col_prefix = f"{techno} {debit}"
-                        best = best.rename(columns={'Opérateur': f"{col_prefix} - Opérateur", "Frais d'accès": f"{col_prefix} - FAS", 'Prix mensuel': f"{col_prefix} - Abo"})
-                        pivot = best if pivot is None else pivot.merge(best, on='Site', how='outer')
+                        bloc = bloc.rename(columns={'Opérateur': f"{col_prefix} - Opérateur"})
+
+                        for marge in st.session_state.dm_marges:
+                            taux = marge / 100
+                            label = f"{int(marge)}%" if marge == int(marge) else f"{marge}%"
+                            # Prix de vente à la nouvelle marge = coût / (1 - nouvelle marge)
+                            bloc[f"{col_prefix} {label} - FAS"] = (best['cout_fas'] / (1 - taux)).round(2)
+                            bloc[f"{col_prefix} {label} - Abo"] = (best['cout_abo'] / (1 - taux)).round(2)
+
+                        pivot = bloc if pivot is None else pivot.merge(bloc, on='Site', how='outer')
 
                     if pivot is None or pivot.empty:
                         st.warning("Aucune offre ne correspond aux critères sélectionnés.")
                     else:
                         nb_sites = pivot['Site'].nunique()
                         st.markdown(f"### Nombre de sites éligibles : {nb_sites}")
-                        st.subheader("Meilleures offres par site")
+                        st.subheader("Meilleures offres par site avec différentes marges")
                         st.dataframe(pivot, use_container_width=True)
                         download_excel(pivot, "meilleures_offres_differentes_marges.xlsx", key="dl_tab_dm")
 
