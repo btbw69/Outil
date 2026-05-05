@@ -467,21 +467,30 @@ if uploaded_file:
             with col_nm:
                 nouvelle_marge_str = st.text_input("Nouvelle Marge (%)", value="", key="conf_nouvelle_marge")
 
+            # Valeur par défaut de la marge par site
+            if nouvelle_marge_str.strip():
+                try:
+                    default_marge_site = float(nouvelle_marge_str.replace(',', '.'))
+                except ValueError:
+                    default_marge_site = marge_conf or 25.0
+            else:
+                default_marge_site = marge_conf or 25.0
+
             st.divider()
 
             sites = df['Site'].dropna().unique()
             ordre_techno = {'FTTO': 0, 'FTTH': 1}
 
             # En-têtes
-            h = st.columns([2, 1.2, 1.2, 1.5, 1.5, 1, 1])
-            for col, label in zip(h, ["Site", "Technologie", "Débit", "Forcer opérateur ?", "Opérateur", "FAS", "Abo"]):
+            h = st.columns([2, 1.2, 1.2, 1.5, 1.5, 1, 1, 1])
+            for col, label in zip(h, ["Site", "Technologie", "Débit", "Forcer opérateur ?", "Opérateur", "Marge %", "FAS", "Abo"]):
                 col.markdown(f"**{label}**")
             st.divider()
 
             result_rows = []
             for i, site in enumerate(sites):
                 df_site = df[df['Site'] == site]
-                cols = st.columns([2, 1.2, 1.2, 1.5, 1.5, 1, 1])
+                cols = st.columns([2, 1.2, 1.2, 1.5, 1.5, 1, 1, 1])
 
                 with cols[0]:
                     st.markdown(f"{site}")
@@ -512,18 +521,32 @@ if uploaded_file:
                     ligne = df_td.sort_values('Coût total').iloc[:1]
                     op = ligne['Opérateur'].values[0] if not ligne.empty else ''
 
-                fas = ligne["Frais d'accès"].values[0] if not ligne.empty else 0
-                abo = ligne['Prix mensuel'].values[0] if not ligne.empty else 0
+                fas_brut = ligne["Frais d'accès"].values[0] if not ligne.empty else 0
+                abo_brut = ligne['Prix mensuel'].values[0] if not ligne.empty else 0
 
                 with cols[5]:
-                    st.markdown(f"{fas:.2f} €")
+                    marge_site = st.number_input("M", min_value=0.0, max_value=99.9,
+                                                  value=float(default_marge_site), step=0.1,
+                                                  key=f"conf_marge_site_{i}", label_visibility="collapsed")
+
+                # Recalcul : ôter marge actuelle puis appliquer marge site
+                if marge_conf is not None and marge_site < 100:
+                    taux_actuel = marge_conf / 100
+                    taux_site = marge_site / 100
+                    fas = round(fas_brut * (1 - taux_actuel) / (1 - taux_site), 2)
+                    abo = round(abo_brut * (1 - taux_actuel) / (1 - taux_site), 2)
+                else:
+                    fas, abo = fas_brut, abo_brut
 
                 with cols[6]:
+                    st.markdown(f"{fas:.2f} €")
+
+                with cols[7]:
                     st.markdown(f"{abo:.2f} €")
 
                 result_rows.append({
                     'Site': site, 'Technologie': techno, 'Débit': debit,
-                    'Opérateur': op, "Frais d'accès": fas, 'Prix mensuel': abo
+                    'Opérateur': op, 'Marge %': marge_site, "Frais d'accès": fas, 'Prix mensuel': abo
                 })
 
             st.divider()
