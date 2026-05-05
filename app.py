@@ -243,26 +243,24 @@ if uploaded_file:
                 if not debits_coches:
                     st.info("Cochez au moins un débit pour afficher les résultats.")
                 else:
-                    mask = pd.Series([False] * len(df), index=df.index)
+                    pivot = None
                     for techno, debit in debits_coches:
-                        mask |= (df['Technologie'] == techno) & (df['Débit'] == debit)
-                    df_filtered = df[mask].copy()
+                        df_td = df[(df['Technologie'] == techno) & (df['Débit'] == debit)].copy()
+                        df_td["Frais d'accès"] = df_td["Frais d'accès"].fillna(0)
+                        df_td['Coût total'] = df_td['Prix mensuel'] * engagement + df_td["Frais d'accès"]
+                        best = df_td.sort_values('Coût total').groupby('Site').first().reset_index()[['Site', "Frais d'accès", 'Prix mensuel']]
+                        col_prefix = f"{techno} {debit}"
+                        best = best.rename(columns={"Frais d'accès": f"{col_prefix} - FAS", 'Prix mensuel': f"{col_prefix} - Abo"})
+                        pivot = best if pivot is None else pivot.merge(best, on='Site', how='outer')
 
-                    if df_filtered.empty:
+                    if pivot is None or pivot.empty:
                         st.warning("Aucune offre ne correspond aux critères sélectionnés.")
                     else:
-                        df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
-                        df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
-                        best_offers = df_filtered.sort_values('Coût total').groupby(['Site', 'Technologie', 'Débit']).first().reset_index()
-
-                        nb_sites = best_offers['Site'].nunique()
+                        nb_sites = pivot['Site'].nunique()
                         st.markdown(f"### Nombre de sites éligibles : {nb_sites}")
-
-                        colonnes_a_afficher = ['Site', 'Technologie', 'Débit', 'Opérateur', "Frais d'accès", 'Prix mensuel', 'Coût total']
-                        best_offers = sort_df_by_debit(best_offers, ['Site', 'Technologie'])
-                        st.subheader("Meilleures offres par site, technologie et débit")
-                        st.dataframe(best_offers[colonnes_a_afficher], use_container_width=True)
-                        download_excel(best_offers[colonnes_a_afficher], "meilleures_offres_multi_techno_debit.xlsx", key="dl_tab_mtmd")
+                        st.subheader("Meilleures offres par site")
+                        st.dataframe(pivot, use_container_width=True)
+                        download_excel(pivot, "meilleures_offres_multi_techno_debit.xlsx", key="dl_tab_mtmd")
 
     # Onglet 2 : FAS/ABO le moins cher - Multi Techno / Multi Débit (clone)
     with onglets[1]:
