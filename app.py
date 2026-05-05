@@ -531,6 +531,8 @@ if uploaded_file:
                 else:
                     ligne = df_td.sort_values('Coût total').iloc[:1]
                     op = ligne['Opérateur'].values[0] if not ligne.empty else ''
+                    with cols[4]:
+                        st.markdown(op)
 
                 fas_brut = ligne["Frais d'accès"].values[0] if not ligne.empty else 0
                 abo_brut = ligne['Prix mensuel'].values[0] if not ligne.empty else 0
