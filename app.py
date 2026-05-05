@@ -486,7 +486,7 @@ if uploaded_file:
                             if debit_ftto in debits_site:
                                 st.session_state[f"conf_debit_{i}"] = debit_ftto
 
-            col_params, col_ftto = st.columns([2, 1])
+            col_params, col_ftto, col_space = st.columns([1, 1, 2])
             with col_params:
                 nouvelle_marge_str = st.text_input("Nouvelle Marge (%)", value="", key="conf_nouvelle_marge", on_change=appliquer_nouvelle_marge)
             with col_ftto:
