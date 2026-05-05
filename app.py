@@ -290,17 +290,23 @@ if uploaded_file:
 
             st.markdown("**Marges cibles :**")
             for i in range(len(st.session_state.dm_marges)):
-                col_val, col_btn = st.columns([1, 4])
+                col_val, col_add, col_del = st.columns([1, 2, 2])
                 with col_val:
                     st.session_state.dm_marges[i] = st.number_input(
                         f"Marge {i+1} (%)", min_value=0.0, max_value=99.9,
                         value=st.session_state.dm_marges[i], step=0.1, key=f"dm_marge_{i}"
                     )
-                with col_btn:
+                with col_add:
                     if i == len(st.session_state.dm_marges) - 1:
                         st.markdown("<br>", unsafe_allow_html=True)
                         if st.button("＋ Ajouter une marge", key="dm_add_marge"):
                             st.session_state.dm_marges.append(30.0)
+                            st.rerun()
+                with col_del:
+                    if len(st.session_state.dm_marges) > 1:
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        if st.button("－ Supprimer", key=f"dm_del_marge_{i}"):
+                            st.session_state.dm_marges.pop(i)
                             st.rerun()
 
             ordre_techno = {'FTTO': 0, 'FTTH': 1}
