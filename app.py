@@ -178,7 +178,6 @@ if uploaded_file:
         "FAS/ABO le moins cher - 1 ligne par site",
         "FAS/ABO le moins cher - 1 ligne par débit",
         "Site Eligible pour un opérateur",
-        "Choix de la techno / opérateur / débit pour chaque site",
         "Proginov",
         "Proginov - Export Excel"
     ])
@@ -305,54 +304,13 @@ if uploaded_file:
                 st.dataframe(df_filtered[colonnes_a_afficher], use_container_width=True)
                 download_excel(df_filtered[colonnes_a_afficher], "offres_filtrees.xlsx", key="dl_tab2")
 
-    # Onglet 4 : Choix par site
+    # Onglet 4 : Proginov
     with onglets[3]:
-        st.markdown("### Choix de la techno / opérateur / débit pour chaque site")
-        if check_columns(df):
-            sites = df['Site'].dropna().unique()
-            techno_list, operateur_list, debit_list, frais_list, prix_list = [], [], [], [], []
-
-            for i, site in enumerate(sites):
-                df_site = df[df['Site'] == site]
-                technos = df_site['Technologie'].dropna().unique()
-                techno = st.selectbox(f"Technologie {site}", options=technos, key=f"s3_tech_{i}")
-
-                df_site_tech = df_site[df_site['Technologie'] == techno]
-                operateurs = df_site_tech['Opérateur'].dropna().unique()
-                operateur = st.selectbox(f"Opérateur {site}", options=operateurs, key=f"s3_op_{i}")
-
-                df_site_op = df_site_tech[df_site_tech['Opérateur'] == operateur]
-                debits = df_site_op['Débit'].dropna().unique()
-                debit = st.selectbox(f"Débit {site}", options=debits, key=f"s3_debit_{i}")
-
-                ligne = df_site_op[df_site_op['Débit'] == debit]
-                frais = ligne["Frais d'accès"].values[0] if not ligne.empty else 0
-                prix = ligne["Prix mensuel"].values[0] if not ligne.empty else 0
-
-                techno_list.append(techno)
-                operateur_list.append(operateur)
-                debit_list.append(debit)
-                frais_list.append(frais)
-                prix_list.append(prix)
-
-            result = pd.DataFrame({
-                'Site': sites,
-                'Technologie': techno_list,
-                'Opérateur': operateur_list,
-                'Débit': debit_list,
-                "Frais d'accès": frais_list,
-                'Prix mensuel': prix_list,
-            })
-            st.dataframe(result, use_container_width=True)
-            download_excel(result, "choix_site.xlsx", label="📥 Télécharger Excel", key="dl_tab3")
-
-    # Onglet 5 : Proginov
-    with onglets[4]:
         st.markdown("### Proginov")
         render_proginov_tab(df, zone_nouvelle, key_prefix="5", filename="proginov_nouvelle_zone.xlsx")
 
-    # Onglet 6 : Proginov - Export Excel
-    with onglets[5]:
+    # Onglet 5 : Proginov - Export Excel
+    with onglets[4]:
         st.markdown("### Proginov - Export Excel")
         if check_columns(df):
             ftth_ops = precompute_ftth_ops(df)
