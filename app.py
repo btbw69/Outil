@@ -186,8 +186,6 @@ if uploaded_file:
     with onglets[0]:
         st.markdown("### FAS/ABO le moins cher - 1 ligne par site")
         if check_columns(df):
-            engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_mtmd")
-
             ordre_techno = {'FTTO': 0, 'FTTH': 1}
             technos = sorted(df['Technologie'].dropna().unique(), key=lambda t: ordre_techno.get(t, 99))
             st.markdown("**Sélectionnez les technologies :**")
@@ -212,7 +210,7 @@ if uploaded_file:
                     for techno, debit in debits_coches:
                         df_td = df[(df['Technologie'] == techno) & (df['Débit'] == debit)].copy()
                         df_td["Frais d'accès"] = df_td["Frais d'accès"].fillna(0)
-                        df_td['Coût total'] = df_td['Prix mensuel'] * engagement + df_td["Frais d'accès"]
+                        df_td['Coût total'] = df_td['Prix mensuel'] * 36 + df_td["Frais d'accès"]
                         best = df_td.sort_values('Coût total').groupby('Site').first().reset_index()[['Site', 'Opérateur', "Frais d'accès", 'Prix mensuel']]
                         col_prefix = f"{techno} {debit}"
                         best = best.rename(columns={'Opérateur': f"{col_prefix} - Opérateur", "Frais d'accès": f"{col_prefix} - FAS", 'Prix mensuel': f"{col_prefix} - Abo"})
@@ -231,8 +229,6 @@ if uploaded_file:
     with onglets[1]:
         st.markdown("### FAS/ABO le moins cher - 1 ligne par débit")
         if check_columns(df):
-            engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_mtmd2")
-
             ordre_techno = {'FTTO': 0, 'FTTH': 1}
             technos = sorted(df['Technologie'].dropna().unique(), key=lambda t: ordre_techno.get(t, 99))
             st.markdown("**Sélectionnez les technologies :**")
@@ -262,7 +258,7 @@ if uploaded_file:
                         st.warning("Aucune offre ne correspond aux critères sélectionnés.")
                     else:
                         df_filtered["Frais d'accès"] = df_filtered["Frais d'accès"].fillna(0)
-                        df_filtered['Coût total'] = df_filtered['Prix mensuel'] * engagement + df_filtered["Frais d'accès"]
+                        df_filtered['Coût total'] = df_filtered['Prix mensuel'] * 36 + df_filtered["Frais d'accès"]
                         best_offers = df_filtered.sort_values('Coût total').groupby(['Site', 'Technologie', 'Débit']).first().reset_index()
 
                         nb_sites = best_offers['Site'].nunique()
