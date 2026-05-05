@@ -175,8 +175,8 @@ if uploaded_file:
     )
 
     onglets = st.tabs([
-        "FAS/ABO le moins cher - Multi Techno / Multi Débit",
-        "FAS/ABO le moins cher - Multi Techno / Multi Débit (2)",
+        "FAS/ABO le moins cher - 1 ligne par site",
+        "FAS/ABO le moins cher - 1 ligne par débit",
         "FAS/ABO le moins cher - Multi Débit",
         "Site Eligible pour un opérateur",
         "Choix de la techno / opérateur / débit pour chaque site",
@@ -219,7 +219,7 @@ if uploaded_file:
 
     # Onglet 1 : FAS/ABO le moins cher - Multi Techno / Multi Débit
     with onglets[0]:
-        st.markdown("### FAS/ABO le moins cher - Multi Techno / Multi Débit")
+        st.markdown("### FAS/ABO le moins cher - 1 ligne par site")
         if check_columns(df):
             engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_mtmd")
 
@@ -264,7 +264,7 @@ if uploaded_file:
 
     # Onglet 2 : FAS/ABO le moins cher - Multi Techno / Multi Débit (clone)
     with onglets[1]:
-        st.markdown("### FAS/ABO le moins cher - Multi Techno / Multi Débit (2)")
+        st.markdown("### FAS/ABO le moins cher - 1 ligne par débit")
         if check_columns(df):
             engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_mtmd2")
 
