@@ -429,6 +429,42 @@ if uploaded_file:
     with onglets[3]:
         st.markdown("### Configurateur d'offre client")
         if check_columns(df):
+            engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_conf")
+
+            # Détection automatique de la marge
+            FAS_COUT_ACHAT_ORANGE = 400
+            marge_conf = None
+
+            if engagement == 36:
+                df_orange = df[(df['Technologie'] == 'FTTO') & (df['Opérateur'] == 'Orange')].copy()
+                df_orange["Frais d'accès"] = df_orange["Frais d'accès"].fillna(0)
+                fas_vals = df_orange["Frais d'accès"][df_orange["Frais d'accès"] > 0]
+                if not fas_vals.empty:
+                    marge_detectee = round((1 - FAS_COUT_ACHAT_ORANGE / fas_vals.iloc[0]) * 100, 2)
+                    st.markdown(f"**Marge Actuelle détectée : {marge_detectee}%**")
+                else:
+                    marge_detectee = None
+                    st.warning("Impossible de détecter la marge (aucun FAS Orange FTTO trouvé)")
+
+                col_ma, _ = st.columns([1, 3])
+                with col_ma:
+                    manuelle_str = st.text_input("Marge Actuelle Manuelle Si Détectée Fausse (%)", value="", key="conf_marge_manuelle")
+                if manuelle_str.strip():
+                    try:
+                        marge_conf = float(manuelle_str.replace(',', '.'))
+                    except ValueError:
+                        st.error("Valeur invalide pour la marge manuelle")
+                        marge_conf = marge_detectee
+                else:
+                    marge_conf = marge_detectee
+            else:
+                st.warning("Engagement différent de 36 mois, merci de rentrer la marge actuelle manuellement.")
+                col_ma, _ = st.columns([1, 3])
+                with col_ma:
+                    marge_conf = st.number_input("Marge Actuelle (%)", min_value=0.0, max_value=99.9, value=25.0, step=0.1, key="conf_marge_manuelle_autre")
+
+            st.divider()
+
             sites = df['Site'].dropna().unique()
             ordre_techno = {'FTTO': 0, 'FTTH': 1}
 
@@ -461,7 +497,7 @@ if uploaded_file:
 
                 df_td = df_site_tech[df_site_tech['Débit'] == debit].copy()
                 df_td["Frais d'accès"] = df_td["Frais d'accès"].fillna(0)
-                df_td['Coût total'] = df_td['Prix mensuel'] * 36 + df_td["Frais d'accès"]
+                df_td['Coût total'] = df_td['Prix mensuel'] * engagement + df_td["Frais d'accès"]
 
                 if force:
                     with cols[4]:
