@@ -463,6 +463,10 @@ if uploaded_file:
                 with col_ma:
                     marge_conf = st.number_input("Marge Actuelle (%)", min_value=0.0, max_value=99.9, value=25.0, step=0.1, key="conf_marge_manuelle_autre")
 
+            col_nm, _ = st.columns([1, 3])
+            with col_nm:
+                nouvelle_marge_str = st.text_input("Nouvelle Marge (%)", value="", key="conf_nouvelle_marge")
+
             st.divider()
 
             sites = df['Site'].dropna().unique()
