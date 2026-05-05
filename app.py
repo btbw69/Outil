@@ -276,6 +276,14 @@ if uploaded_file:
     # Onglet 3 : FAS/ABO le moins cher - Différentes Marges
     with onglets[2]:
         st.markdown("### FAS/ABO le moins cher - Différentes Marges")
+        st.markdown("""
+        <style>
+        div[data-testid="stHorizontalBlock"] div[data-testid="column"] .stButton button {
+            padding: 0.25rem 0.6rem;
+            min-width: unset;
+        }
+        </style>
+        """, unsafe_allow_html=True)
         if check_columns(df):
             engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_dm")
 
@@ -340,7 +348,7 @@ if uploaded_file:
             for idx, marge in enumerate(st.session_state.dm_marges):
                 mid = marge['id']
                 n = len(st.session_state.dm_marges)
-                col_val, col_up, col_down, col_del = st.columns([4, 0.5, 0.5, 1.5], gap="small")
+                col_val, col_up, col_down, col_del, col_space = st.columns([1.5, 0.35, 0.35, 1.2, 4], gap="small")
                 with col_val:
                     st.session_state.dm_marges[idx]['val'] = st.number_input(
                         f"Marge {idx+1} (%)", min_value=0.0, max_value=99.9,
