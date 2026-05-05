@@ -282,11 +282,11 @@ if uploaded_file:
             # Marge actuelle
             col_ma, _ = st.columns([1, 3])
             with col_ma:
-                marge_actuelle = st.number_input("Marge Actuelle (%)", min_value=0.0, max_value=99.9, value=30.0, step=0.1, key="dm_marge_actuelle")
+                marge_actuelle = st.number_input("Marge Actuelle (%)", min_value=0.0, max_value=99.9, value=25.0, step=0.1, key="dm_marge_actuelle")
 
             # Marges cibles dynamiques
             if 'dm_marges' not in st.session_state:
-                st.session_state.dm_marges = [30.0]
+                st.session_state.dm_marges = [20.0]
 
             st.markdown("**Marges cibles :**")
             for i in range(len(st.session_state.dm_marges)):
