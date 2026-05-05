@@ -177,6 +177,7 @@ if uploaded_file:
     onglets = st.tabs([
         "FAS/ABO le moins cher - 1 ligne par site",
         "FAS/ABO le moins cher - 1 ligne par débit",
+        "FAS/ABO le moins cher - Différentes Marges",
         "Site Eligible pour un opérateur",
         "Proginov",
         "Proginov - Export Excel"
@@ -272,8 +273,52 @@ if uploaded_file:
                         st.dataframe(best_offers[colonnes_a_afficher], use_container_width=True)
                         download_excel(best_offers[colonnes_a_afficher], "meilleures_offres_multi_techno_debit2.xlsx", key="dl_tab_mtmd2")
 
-    # Onglet 3 : Site Eligible pour un opérateur
+    # Onglet 3 : FAS/ABO le moins cher - Différentes Marges
     with onglets[2]:
+        st.markdown("### FAS/ABO le moins cher - Différentes Marges")
+        if check_columns(df):
+            engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_dm")
+            ordre_techno = {'FTTO': 0, 'FTTH': 1}
+            technos = sorted(df['Technologie'].dropna().unique(), key=lambda t: ordre_techno.get(t, 99))
+            st.markdown("**Sélectionnez les technologies :**")
+            technos_cochees = [t for t in technos if st.checkbox(t, key=f"dm_techno_{t}")]
+
+            if not technos_cochees:
+                st.info("Cochez au moins une technologie pour afficher les débits.")
+            else:
+                st.markdown("**Sélectionnez les débits :**")
+                debits_coches = []
+                for techno in technos_cochees:
+                    st.markdown(f"*{techno}*")
+                    debits_techno = sort_debits(df[df['Technologie'] == techno]['Débit'].dropna().unique())
+                    for d in debits_techno:
+                        if st.checkbox(d, key=f"dm_debit_{techno}_{d}"):
+                            debits_coches.append((techno, d))
+
+                if not debits_coches:
+                    st.info("Cochez au moins un débit pour afficher les résultats.")
+                else:
+                    pivot = None
+                    for techno, debit in debits_coches:
+                        df_td = df[(df['Technologie'] == techno) & (df['Débit'] == debit)].copy()
+                        df_td["Frais d'accès"] = df_td["Frais d'accès"].fillna(0)
+                        df_td['Coût total'] = df_td['Prix mensuel'] * engagement + df_td["Frais d'accès"]
+                        best = df_td.sort_values('Coût total').groupby('Site').first().reset_index()[['Site', 'Opérateur', "Frais d'accès", 'Prix mensuel']]
+                        col_prefix = f"{techno} {debit}"
+                        best = best.rename(columns={'Opérateur': f"{col_prefix} - Opérateur", "Frais d'accès": f"{col_prefix} - FAS", 'Prix mensuel': f"{col_prefix} - Abo"})
+                        pivot = best if pivot is None else pivot.merge(best, on='Site', how='outer')
+
+                    if pivot is None or pivot.empty:
+                        st.warning("Aucune offre ne correspond aux critères sélectionnés.")
+                    else:
+                        nb_sites = pivot['Site'].nunique()
+                        st.markdown(f"### Nombre de sites éligibles : {nb_sites}")
+                        st.subheader("Meilleures offres par site")
+                        st.dataframe(pivot, use_container_width=True)
+                        download_excel(pivot, "meilleures_offres_differentes_marges.xlsx", key="dl_tab_dm")
+
+    # Onglet 4 : Site Eligible pour un opérateur
+    with onglets[3]:
         st.markdown("### Site Eligible pour un opérateur")
         if check_columns(df):
             technos = df['Technologie'].dropna().unique()
@@ -302,13 +347,13 @@ if uploaded_file:
                 st.dataframe(df_filtered[colonnes_a_afficher], use_container_width=True)
                 download_excel(df_filtered[colonnes_a_afficher], "offres_filtrees.xlsx", key="dl_tab2")
 
-    # Onglet 4 : Proginov
-    with onglets[3]:
+    # Onglet 5 : Proginov
+    with onglets[4]:
         st.markdown("### Proginov")
         render_proginov_tab(df, zone_nouvelle, key_prefix="5", filename="proginov_nouvelle_zone.xlsx")
 
-    # Onglet 5 : Proginov - Export Excel
-    with onglets[4]:
+    # Onglet 6 : Proginov - Export Excel
+    with onglets[5]:
         st.markdown("### Proginov - Export Excel")
         if check_columns(df):
             ftth_ops = precompute_ftth_ops(df)
