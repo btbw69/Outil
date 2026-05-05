@@ -248,9 +248,9 @@ if uploaded_file:
                         df_td = df[(df['Technologie'] == techno) & (df['Débit'] == debit)].copy()
                         df_td["Frais d'accès"] = df_td["Frais d'accès"].fillna(0)
                         df_td['Coût total'] = df_td['Prix mensuel'] * engagement + df_td["Frais d'accès"]
-                        best = df_td.sort_values('Coût total').groupby('Site').first().reset_index()[['Site', "Frais d'accès", 'Prix mensuel']]
+                        best = df_td.sort_values('Coût total').groupby('Site').first().reset_index()[['Site', 'Opérateur', "Frais d'accès", 'Prix mensuel']]
                         col_prefix = f"{techno} {debit}"
-                        best = best.rename(columns={"Frais d'accès": f"{col_prefix} - FAS", 'Prix mensuel': f"{col_prefix} - Abo"})
+                        best = best.rename(columns={'Opérateur': f"{col_prefix} - Opérateur", "Frais d'accès": f"{col_prefix} - FAS", 'Prix mensuel': f"{col_prefix} - Abo"})
                         pivot = best if pivot is None else pivot.merge(best, on='Site', how='outer')
 
                     if pivot is None or pivot.empty:
