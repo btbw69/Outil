@@ -288,6 +288,12 @@ if uploaded_file:
             if 'dm_marges' not in st.session_state:
                 st.session_state.dm_marges = [20.0]
 
+            def dm_add_marge():
+                st.session_state.dm_marges.append(20.0)
+
+            def dm_del_marge(i):
+                st.session_state.dm_marges.pop(i)
+
             st.markdown("**Marges cibles :**")
             for i in range(len(st.session_state.dm_marges)):
                 col_val, col_del = st.columns([1, 4])
@@ -299,13 +305,9 @@ if uploaded_file:
                 with col_del:
                     if len(st.session_state.dm_marges) > 1:
                         st.markdown("<br>", unsafe_allow_html=True)
-                        if st.button("－ Supprimer", key=f"dm_del_marge_{i}"):
-                            st.session_state.dm_marges.pop(i)
-                            st.rerun()
+                        st.button("－ Supprimer", key=f"dm_del_marge_{i}", on_click=dm_del_marge, args=(i,))
 
-            if st.button("＋ Ajouter une marge", key="dm_add_marge"):
-                st.session_state.dm_marges.append(30.0)
-                st.rerun()
+            st.button("＋ Ajouter une marge", key="dm_add_marge", on_click=dm_add_marge)
 
             ordre_techno = {'FTTO': 0, 'FTTH': 1}
             technos = sorted(df['Technologie'].dropna().unique(), key=lambda t: ordre_techno.get(t, 99))
