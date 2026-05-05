@@ -279,10 +279,40 @@ if uploaded_file:
         if check_columns(df):
             engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_dm")
 
-            # Marge actuelle
-            col_ma, _ = st.columns([1, 3])
-            with col_ma:
-                marge_actuelle = st.number_input("Marge Actuelle (%)", min_value=0.0, max_value=99.9, value=25.0, step=0.1, key="dm_marge_actuelle")
+            # Détection automatique de la marge (uniquement sur 36 mois)
+            FAS_COUT_ACHAT_ORANGE = 400
+            marge_actuelle = None
+
+            if engagement == 36:
+                df_orange = df[(df['Technologie'] == 'FTTO') & (df['Opérateur'] == 'Orange')].copy()
+                df_orange["Frais d'accès"] = df_orange["Frais d'accès"].fillna(0)
+                fas_vals = df_orange["Frais d'accès"][df_orange["Frais d'accès"] > 0]
+
+                if not fas_vals.empty:
+                    fas_orange = fas_vals.iloc[0]
+                    marge_detectee = round((1 - FAS_COUT_ACHAT_ORANGE / fas_orange) * 100, 2)
+                    st.markdown(f"**Marge Actuelle détectée : {marge_detectee}%**")
+                else:
+                    marge_detectee = None
+                    st.warning("Impossible de détecter la marge (aucun FAS Orange FTTO trouvé)")
+
+                col_ma, _ = st.columns([1, 3])
+                with col_ma:
+                    manuelle_str = st.text_input("Marge Actuelle Manuelle Si Détectée Fausse (%)", value="", key="dm_marge_manuelle")
+
+                if manuelle_str.strip():
+                    try:
+                        marge_actuelle = float(manuelle_str.replace(',', '.'))
+                    except ValueError:
+                        st.error("Valeur invalide pour la marge manuelle")
+                        marge_actuelle = marge_detectee
+                else:
+                    marge_actuelle = marge_detectee
+            else:
+                st.warning("Engagement différent de 36 mois, merci de rentrer la marge actuelle manuellement.")
+                col_ma, _ = st.columns([1, 3])
+                with col_ma:
+                    marge_actuelle = st.number_input("Marge Actuelle (%)", min_value=0.0, max_value=99.9, value=25.0, step=0.1, key="dm_marge_manuelle_autre")
 
             # Marges cibles dynamiques avec IDs stables
             if 'dm_marges' not in st.session_state:
@@ -331,6 +361,8 @@ if uploaded_file:
 
                 if not debits_coches:
                     st.info("Cochez au moins un débit pour afficher les résultats.")
+                elif marge_actuelle is None:
+                    st.warning("Marge actuelle non disponible, veuillez la saisir manuellement.")
                 else:
                     taux_actuel = marge_actuelle / 100
 
