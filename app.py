@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import json
 from io import BytesIO
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -429,6 +430,28 @@ if uploaded_file:
     with onglets[3]:
         st.markdown("### Configurateur d'offre client")
         if check_columns(df):
+            # Chargement d'une configuration sauvegardée
+            sites_all = df['Site'].dropna().unique()
+            col_load, col_info = st.columns([1, 3])
+            with col_load:
+                uploaded_config = st.file_uploader("Charger une configuration", type=["json"], key="conf_load")
+            if uploaded_config:
+                config_data = json.loads(uploaded_config.read())
+                for i, site in enumerate(sites_all):
+                    if site in config_data:
+                        sd = config_data[site]
+                        if sd.get('techno'): st.session_state[f'conf_techno_{i}'] = sd['techno']
+                        if sd.get('debit'): st.session_state[f'conf_debit_{i}'] = sd['debit']
+                        st.session_state[f'conf_force_{i}'] = sd.get('force', False)
+                        if sd.get('op'): st.session_state[f'conf_op_{i}'] = sd['op']
+                        if sd.get('marge') is not None: st.session_state[f'conf_marge_site_{i}'] = sd['marge']
+                if '_params' in config_data:
+                    p = config_data['_params']
+                    if p.get('nouvelle_marge'): st.session_state['conf_nouvelle_marge'] = p['nouvelle_marge']
+                    if p.get('debit_ftto_global'): st.session_state['conf_debit_ftto_global'] = p['debit_ftto_global']
+                st.rerun()
+
+            st.divider()
             engagement = st.slider("Durée d'engagement (mois)", min_value=12, max_value=60, step=12, value=36, key="engagement_conf")
 
             # Détection automatique de la marge
@@ -579,6 +602,22 @@ if uploaded_file:
 
             st.divider()
             result_df = pd.DataFrame(result_rows)
+
+            # Sauvegarde de la configuration
+            config_save = {'_params': {
+                'nouvelle_marge': st.session_state.get('conf_nouvelle_marge', ''),
+                'debit_ftto_global': st.session_state.get('conf_debit_ftto_global'),
+            }}
+            for i, site in enumerate(sites_all):
+                config_save[site] = {
+                    'techno': st.session_state.get(f'conf_techno_{i}'),
+                    'debit': st.session_state.get(f'conf_debit_{i}'),
+                    'force': st.session_state.get(f'conf_force_{i}', False),
+                    'op': st.session_state.get(f'conf_op_{i}'),
+                    'marge': st.session_state.get(f'conf_marge_site_{i}'),
+                }
+            st.download_button("💾 Sauvegarder la configuration", data=json.dumps(config_save, ensure_ascii=False, indent=2),
+                               file_name="config_offre_client.json", mime="application/json", key="dl_conf_save")
 
             show_op = st.checkbox("Faire apparaitre les opérateurs dans l'excel ?", value=False, key="conf_show_op")
 
