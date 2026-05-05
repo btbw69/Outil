@@ -284,28 +284,31 @@ if uploaded_file:
             with col_ma:
                 marge_actuelle = st.number_input("Marge Actuelle (%)", min_value=0.0, max_value=99.9, value=25.0, step=0.1, key="dm_marge_actuelle")
 
-            # Marges cibles dynamiques
+            # Marges cibles dynamiques avec IDs stables
             if 'dm_marges' not in st.session_state:
-                st.session_state.dm_marges = [20.0]
+                st.session_state.dm_marges = [{'id': 0, 'val': 20.0}]
+                st.session_state.dm_marge_counter = 1
 
             def dm_add_marge():
-                st.session_state.dm_marges.append(20.0)
+                st.session_state.dm_marges.append({'id': st.session_state.dm_marge_counter, 'val': 20.0})
+                st.session_state.dm_marge_counter += 1
 
-            def dm_del_marge(i):
-                st.session_state.dm_marges.pop(i)
+            def dm_del_marge(mid):
+                st.session_state.dm_marges = [m for m in st.session_state.dm_marges if m['id'] != mid]
 
             st.markdown("**Marges cibles :**")
-            for i in range(len(st.session_state.dm_marges)):
+            for idx, marge in enumerate(st.session_state.dm_marges):
+                mid = marge['id']
                 col_val, col_del = st.columns([1, 4])
                 with col_val:
-                    st.session_state.dm_marges[i] = st.number_input(
-                        f"Marge {i+1} (%)", min_value=0.0, max_value=99.9,
-                        value=st.session_state.dm_marges[i], step=0.1, key=f"dm_marge_{i}"
+                    st.session_state.dm_marges[idx]['val'] = st.number_input(
+                        f"Marge {idx+1} (%)", min_value=0.0, max_value=99.9,
+                        value=marge['val'], step=0.1, key=f"dm_marge_{mid}"
                     )
                 with col_del:
                     if len(st.session_state.dm_marges) > 1:
                         st.markdown("<br>", unsafe_allow_html=True)
-                        st.button("－ Supprimer", key=f"dm_del_marge_{i}", on_click=dm_del_marge, args=(i,))
+                        st.button("－ Supprimer", key=f"dm_del_marge_{mid}", on_click=dm_del_marge, args=(mid,))
 
             st.button("＋ Ajouter une marge", key="dm_add_marge", on_click=dm_add_marge)
 
@@ -346,8 +349,9 @@ if uploaded_file:
                         bloc = bloc.rename(columns={'Opérateur': f"{col_prefix} - Opérateur"})
 
                         for marge in st.session_state.dm_marges:
-                            taux = marge / 100
-                            label = f"{int(marge)}%" if marge == int(marge) else f"{marge}%"
+                            marge_val = st.session_state.get(f"dm_marge_{marge['id']}", marge['val'])
+                            taux = marge_val / 100
+                            label = f"{int(marge_val)}%" if marge_val == int(marge_val) else f"{marge_val}%"
                             # Prix de vente à la nouvelle marge = coût / (1 - nouvelle marge)
                             bloc[f"{col_prefix} {label} - FAS"] = (best['cout_fas'] / (1 - taux)).round(2)
                             bloc[f"{col_prefix} {label} - Abo"] = (best['cout_abo'] / (1 - taux)).round(2)
