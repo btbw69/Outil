@@ -580,7 +580,7 @@ if uploaded_file:
             st.divider()
             result_df = pd.DataFrame(result_rows)
 
-            show_op = st.checkbox("Faire apparaitre les opérateurs dans l'excel ?", value=True, key="conf_show_op")
+            show_op = st.checkbox("Faire apparaitre les opérateurs dans l'excel ?", value=False, key="conf_show_op")
 
             from openpyxl import Workbook
             from openpyxl.styles import Alignment
