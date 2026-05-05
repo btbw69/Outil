@@ -474,9 +474,24 @@ if uploaded_file:
                     except ValueError:
                         pass
 
-            col_nm, _ = st.columns([1, 3])
-            with col_nm:
+            def appliquer_debit_ftto():
+                debit_ftto = st.session_state.get("conf_debit_ftto_global")
+                if debit_ftto:
+                    sites_loc = df['Site'].dropna().unique()
+                    for i, site in enumerate(sites_loc):
+                        techno_key = f"conf_techno_{i}"
+                        techno_val = st.session_state.get(techno_key, "")
+                        if techno_val == 'FTTO':
+                            debits_site = sort_debits(df[(df['Site'] == site) & (df['Technologie'] == 'FTTO')]['Débit'].dropna().unique())
+                            if debit_ftto in debits_site:
+                                st.session_state[f"conf_debit_{i}"] = debit_ftto
+
+            col_params, col_ftto = st.columns([2, 1])
+            with col_params:
                 nouvelle_marge_str = st.text_input("Nouvelle Marge (%)", value="", key="conf_nouvelle_marge", on_change=appliquer_nouvelle_marge)
+            with col_ftto:
+                debits_ftto = sort_debits(df[df['Technologie'] == 'FTTO']['Débit'].dropna().unique())
+                st.selectbox("Débit de toutes les FTTO", options=debits_ftto, key="conf_debit_ftto_global", on_change=appliquer_debit_ftto)
 
             # Valeur par défaut de la marge par site (première fois)
             if nouvelle_marge_str.strip():
