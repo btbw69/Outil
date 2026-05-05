@@ -463,11 +463,22 @@ if uploaded_file:
                 with col_ma:
                     marge_conf = st.number_input("Marge Actuelle (%)", min_value=0.0, max_value=99.9, value=25.0, step=0.1, key="conf_marge_manuelle_autre")
 
+            def appliquer_nouvelle_marge():
+                val_str = st.session_state.get("conf_nouvelle_marge", "")
+                if val_str.strip():
+                    try:
+                        val = float(val_str.replace(',', '.'))
+                        for key in list(st.session_state.keys()):
+                            if key.startswith("conf_marge_site_"):
+                                st.session_state[key] = val
+                    except ValueError:
+                        pass
+
             col_nm, _ = st.columns([1, 3])
             with col_nm:
-                nouvelle_marge_str = st.text_input("Nouvelle Marge (%)", value="", key="conf_nouvelle_marge")
+                nouvelle_marge_str = st.text_input("Nouvelle Marge (%)", value="", key="conf_nouvelle_marge", on_change=appliquer_nouvelle_marge)
 
-            # Valeur par défaut de la marge par site
+            # Valeur par défaut de la marge par site (première fois)
             if nouvelle_marge_str.strip():
                 try:
                     default_marge_site = float(nouvelle_marge_str.replace(',', '.'))
