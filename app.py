@@ -579,7 +579,28 @@ if uploaded_file:
 
             st.divider()
             result_df = pd.DataFrame(result_rows)
-            download_excel(result_df, "configuration_offre_client.xlsx", key="dl_conf")
+
+            from openpyxl import Workbook
+            from openpyxl.styles import Alignment
+            from openpyxl.utils import get_column_letter
+            buf_conf = BytesIO()
+            wb_conf = Workbook()
+            ws_conf = wb_conf.active
+            ws_conf.append(list(result_df.columns))
+            for row in result_df.itertuples(index=False):
+                ws_conf.append(list(row))
+            center = Alignment(horizontal='center', vertical='center')
+            for i, col in enumerate(ws_conf.columns, 1):
+                max_len = max((len(str(cell.value)) if cell.value is not None else 0) for cell in col)
+                ws_conf.column_dimensions[get_column_letter(i)].width = max_len + 3
+                for cell in col:
+                    cell.alignment = center
+            wb_conf.save(buf_conf)
+            buf_conf.seek(0)
+            st.download_button("📥 Télécharger la configuration", data=buf_conf,
+                               file_name="configuration_offre_client.xlsx",
+                               mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                               key="dl_conf")
 
     # Onglet 5 : Site Eligible pour un opérateur
     with onglets[4]:
