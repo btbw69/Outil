@@ -326,17 +326,34 @@ if uploaded_file:
             def dm_del_marge(mid):
                 st.session_state.dm_marges = [m for m in st.session_state.dm_marges if m['id'] != mid]
 
+            def dm_move_up(idx):
+                if idx > 0:
+                    m = st.session_state.dm_marges
+                    m[idx], m[idx - 1] = m[idx - 1], m[idx]
+
+            def dm_move_down(idx):
+                m = st.session_state.dm_marges
+                if idx < len(m) - 1:
+                    m[idx], m[idx + 1] = m[idx + 1], m[idx]
+
             st.markdown("**Marges cibles :**")
             for idx, marge in enumerate(st.session_state.dm_marges):
                 mid = marge['id']
-                col_val, col_del = st.columns([1, 4])
+                n = len(st.session_state.dm_marges)
+                col_val, col_up, col_down, col_del = st.columns([2, 1, 1, 2])
                 with col_val:
                     st.session_state.dm_marges[idx]['val'] = st.number_input(
                         f"Marge {idx+1} (%)", min_value=0.0, max_value=99.9,
                         value=marge['val'], step=0.1, key=f"dm_marge_{mid}"
                     )
+                with col_up:
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    st.button("↑", key=f"dm_up_{mid}", on_click=dm_move_up, args=(idx,), disabled=(idx == 0))
+                with col_down:
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    st.button("↓", key=f"dm_down_{mid}", on_click=dm_move_down, args=(idx,), disabled=(idx == n - 1))
                 with col_del:
-                    if len(st.session_state.dm_marges) > 1:
+                    if n > 1:
                         st.markdown("<br>", unsafe_allow_html=True)
                         st.button("－ Supprimer", key=f"dm_del_marge_{mid}", on_click=dm_del_marge, args=(mid,))
 
