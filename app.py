@@ -180,16 +180,32 @@ if uploaded_file:
         pending = st.session_state.pop('conf_pending')
         sites_temp = df['Site'].dropna().unique()
         for i, site in enumerate(sites_temp):
+            # Effacer l'ancien état des liens
+            old_links = st.session_state.pop(f'conf_links_{i}', [{'id': 0}])
+            st.session_state.pop(f'conf_link_counter_{i}', None)
+            for ol in old_links:
+                for k in [f'conf_techno_{i}_{ol["id"]}', f'conf_debit_{i}_{ol["id"]}',
+                           f'conf_force_{i}_{ol["id"]}', f'conf_op_{i}_{ol["id"]}',
+                           f'conf_marge_site_{i}_{ol["id"]}']:
+                    st.session_state.pop(k, None)
+            # Compat ancienne format (clés sans lid)
             for k in [f'conf_techno_{i}', f'conf_debit_{i}', f'conf_force_{i}',
                        f'conf_op_{i}', f'conf_marge_site_{i}']:
                 st.session_state.pop(k, None)
             if site in pending:
                 sd = pending[site]
-                if sd.get('techno'): st.session_state[f'conf_techno_{i}'] = sd['techno']
-                if sd.get('debit'): st.session_state[f'conf_debit_{i}'] = sd['debit']
-                st.session_state[f'conf_force_{i}'] = sd.get('force', False)
-                if sd.get('op'): st.session_state[f'conf_op_{i}'] = sd['op']
-                if sd.get('marge') is not None: st.session_state[f'conf_marge_site_{i}'] = float(sd['marge'])
+                links_data = sd.get('links', [sd])  # compat ancien format
+                new_links = []
+                for j, ld in enumerate(links_data):
+                    lid = j
+                    new_links.append({'id': lid})
+                    if ld.get('techno'): st.session_state[f'conf_techno_{i}_{lid}'] = ld['techno']
+                    if ld.get('debit'): st.session_state[f'conf_debit_{i}_{lid}'] = ld['debit']
+                    st.session_state[f'conf_force_{i}_{lid}'] = ld.get('force', False)
+                    if ld.get('op'): st.session_state[f'conf_op_{i}_{lid}'] = ld['op']
+                    if ld.get('marge') is not None: st.session_state[f'conf_marge_site_{i}_{lid}'] = float(ld['marge'])
+                st.session_state[f'conf_links_{i}'] = new_links
+                st.session_state[f'conf_link_counter_{i}'] = len(links_data)
         if '_params' in pending:
             p = pending['_params']
             for k in ['conf_nouvelle_marge', 'conf_debit_ftto_global']:
@@ -518,13 +534,28 @@ if uploaded_file:
                 debit_ftto = st.session_state.get("conf_debit_ftto_global")
                 if debit_ftto:
                     sites_loc = df['Site'].dropna().unique()
-                    for i, site in enumerate(sites_loc):
-                        techno_key = f"conf_techno_{i}"
-                        techno_val = st.session_state.get(techno_key, "")
-                        if techno_val == 'FTTO':
-                            debits_site = sort_debits(df[(df['Site'] == site) & (df['Technologie'] == 'FTTO')]['Débit'].dropna().unique())
-                            if debit_ftto in debits_site:
-                                st.session_state[f"conf_debit_{i}"] = debit_ftto
+                    for si, site_loc in enumerate(sites_loc):
+                        for lnk in st.session_state.get(f'conf_links_{si}', [{'id': 0}]):
+                            lid = lnk['id']
+                            if st.session_state.get(f"conf_techno_{si}_{lid}", "") == 'FTTO':
+                                debits_site = sort_debits(df[(df['Site'] == site_loc) & (df['Technologie'] == 'FTTO')]['Débit'].dropna().unique())
+                                if debit_ftto in debits_site:
+                                    st.session_state[f"conf_debit_{si}_{lid}"] = debit_ftto
+
+            def add_link(site_i):
+                ck = f'conf_link_counter_{site_i}'
+                lk = f'conf_links_{site_i}'
+                new_id = st.session_state.get(ck, 1)
+                st.session_state[lk].append({'id': new_id})
+                st.session_state[ck] = new_id + 1
+
+            def del_link(site_i, link_id):
+                lk = f'conf_links_{site_i}'
+                st.session_state[lk] = [l for l in st.session_state[lk] if l['id'] != link_id]
+                for k in [f'conf_techno_{site_i}_{link_id}', f'conf_debit_{site_i}_{link_id}',
+                           f'conf_force_{site_i}_{link_id}', f'conf_op_{site_i}_{link_id}',
+                           f'conf_marge_site_{site_i}_{link_id}']:
+                    st.session_state.pop(k, None)
 
             col_params, col_ftto, col_space = st.columns([1, 1, 2])
             with col_params:
@@ -542,11 +573,15 @@ if uploaded_file:
             else:
                 default_marge_site = marge_conf or 25.0
 
-            # Initialiser le session state pour chaque site si pas encore défini
+            # Initialiser liens et marges pour chaque site
             for i in range(len(sites_all)):
-                key = f"conf_marge_site_{i}"
-                if key not in st.session_state:
-                    st.session_state[key] = float(default_marge_site)
+                if f'conf_links_{i}' not in st.session_state:
+                    st.session_state[f'conf_links_{i}'] = [{'id': 0}]
+                    st.session_state[f'conf_link_counter_{i}'] = 1
+                for lnk in st.session_state[f'conf_links_{i}']:
+                    mk = f"conf_marge_site_{i}_{lnk['id']}"
+                    if mk not in st.session_state:
+                        st.session_state[mk] = float(default_marge_site)
 
             st.divider()
 
@@ -554,74 +589,88 @@ if uploaded_file:
             ordre_techno = {'FTTO': 0, 'FTTH': 1}
 
             # En-têtes
-            h = st.columns([2, 1.2, 1.2, 1.5, 1.5, 1, 1, 1])
-            for col, label in zip(h, ["Site", "Technologie", "Débit", "Forcer opérateur ?", "Opérateur", "Marge %", "FAS", "Abo"]):
+            h = st.columns([2, 1.2, 0.35, 1.2, 1.5, 1.5, 1, 1, 1, 0.4])
+            for col, label in zip(h, ["Site", "Technologie", "", "Débit", "Forcer opérateur ?", "Opérateur", "Marge %", "FAS", "Abo", ""]):
                 col.markdown(f"**{label}**")
             st.divider()
 
             result_rows = []
             for i, site in enumerate(sites):
                 df_site = df[df['Site'] == site]
-                cols = st.columns([2, 1.2, 1.2, 1.5, 1.5, 1, 1, 1])
+                links = st.session_state[f'conf_links_{i}']
+                n_links = len(links)
 
-                with cols[0]:
-                    st.markdown(f"{site}")
+                for j_idx, lnk in enumerate(links):
+                    lid = lnk['id']
+                    cols = st.columns([2, 1.2, 0.35, 1.2, 1.5, 1.5, 1, 1, 1, 0.4])
 
-                with cols[1]:
-                    technos = sorted(df_site['Technologie'].dropna().unique(), key=lambda t: ordre_techno.get(t, 99))
-                    techno = st.selectbox("T", options=technos, key=f"conf_techno_{i}", label_visibility="collapsed")
+                    with cols[0]:
+                        if j_idx == 0:
+                            st.markdown(f"{site}")
 
-                with cols[2]:
-                    df_site_tech = df_site[df_site['Technologie'] == techno]
-                    debits = sort_debits(df_site_tech['Débit'].dropna().unique())
-                    debit = st.selectbox("D", options=debits, key=f"conf_debit_{i}", label_visibility="collapsed")
+                    with cols[1]:
+                        technos = sorted(df_site['Technologie'].dropna().unique(), key=lambda t: ordre_techno.get(t, 99))
+                        techno = st.selectbox("T", options=technos, key=f"conf_techno_{i}_{lid}", label_visibility="collapsed")
 
-                with cols[3]:
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    force = st.checkbox("Forcer", key=f"conf_force_{i}", label_visibility="collapsed")
+                    with cols[2]:
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        st.button("＋", key=f"conf_add_{i}_{lid}", on_click=add_link, args=(i,))
 
-                df_td = df_site_tech[df_site_tech['Débit'] == debit].copy()
-                df_td["Frais d'accès"] = df_td["Frais d'accès"].fillna(0)
-                df_td['Coût total'] = df_td['Prix mensuel'] * engagement + df_td["Frais d'accès"]
+                    with cols[3]:
+                        df_site_tech = df_site[df_site['Technologie'] == techno]
+                        debits = sort_debits(df_site_tech['Débit'].dropna().unique())
+                        debit = st.selectbox("D", options=debits, key=f"conf_debit_{i}_{lid}", label_visibility="collapsed")
 
-                if force:
                     with cols[4]:
-                        ops = df_td.sort_values('Coût total')['Opérateur'].dropna().unique()
-                        op = st.selectbox("Op", options=list(ops), key=f"conf_op_{i}", label_visibility="collapsed")
-                    ligne = df_td[df_td['Opérateur'] == op]
-                else:
-                    ligne = df_td.sort_values('Coût total').iloc[:1]
-                    op = ligne['Opérateur'].values[0] if not ligne.empty else ''
-                    with cols[4]:
-                        st.markdown(op)
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        force = st.checkbox("Forcer", key=f"conf_force_{i}_{lid}", label_visibility="collapsed")
 
-                fas_brut = ligne["Frais d'accès"].values[0] if not ligne.empty else 0
-                abo_brut = ligne['Prix mensuel'].values[0] if not ligne.empty else 0
+                    df_td = df_site_tech[df_site_tech['Débit'] == debit].copy()
+                    df_td["Frais d'accès"] = df_td["Frais d'accès"].fillna(0)
+                    df_td['Coût total'] = df_td['Prix mensuel'] * engagement + df_td["Frais d'accès"]
 
-                with cols[5]:
-                    marge_site = st.number_input("M", min_value=0.0, max_value=99.9,
-                                                  step=0.1, key=f"conf_marge_site_{i}",
-                                                  label_visibility="collapsed")
+                    if force:
+                        with cols[5]:
+                            ops = df_td.sort_values('Coût total')['Opérateur'].dropna().unique()
+                            op = st.selectbox("Op", options=list(ops), key=f"conf_op_{i}_{lid}", label_visibility="collapsed")
+                        ligne = df_td[df_td['Opérateur'] == op]
+                    else:
+                        ligne = df_td.sort_values('Coût total').iloc[:1]
+                        op = ligne['Opérateur'].values[0] if not ligne.empty else ''
+                        with cols[5]:
+                            st.markdown(op)
 
-                # Recalcul : ôter marge actuelle puis appliquer marge site
-                if marge_conf is not None and marge_site < 100:
-                    taux_actuel = marge_conf / 100
-                    taux_site = marge_site / 100
-                    fas = round(fas_brut * (1 - taux_actuel) / (1 - taux_site), 2)
-                    abo = round(abo_brut * (1 - taux_actuel) / (1 - taux_site), 2)
-                else:
-                    fas, abo = fas_brut, abo_brut
+                    fas_brut = ligne["Frais d'accès"].values[0] if not ligne.empty else 0
+                    abo_brut = ligne['Prix mensuel'].values[0] if not ligne.empty else 0
 
-                with cols[6]:
-                    st.markdown(f"{fas:.2f} €")
+                    with cols[6]:
+                        marge_site = st.number_input("M", min_value=0.0, max_value=99.9,
+                                                      step=0.1, key=f"conf_marge_site_{i}_{lid}",
+                                                      label_visibility="collapsed")
 
-                with cols[7]:
-                    st.markdown(f"{abo:.2f} €")
+                    if marge_conf is not None and marge_site < 100:
+                        taux_actuel = marge_conf / 100
+                        taux_site = marge_site / 100
+                        fas = round(fas_brut * (1 - taux_actuel) / (1 - taux_site), 2)
+                        abo = round(abo_brut * (1 - taux_actuel) / (1 - taux_site), 2)
+                    else:
+                        fas, abo = fas_brut, abo_brut
 
-                result_rows.append({
-                    'Site': site, 'Technologie': techno, 'Débit': debit,
-                    'Opérateur': op, 'Marge %': marge_site, "Frais d'accès": fas, 'Prix mensuel': abo
-                })
+                    with cols[7]:
+                        st.markdown(f"{fas:.2f} €")
+
+                    with cols[8]:
+                        st.markdown(f"{abo:.2f} €")
+
+                    with cols[9]:
+                        if n_links > 1:
+                            st.markdown("<br>", unsafe_allow_html=True)
+                            st.button("－", key=f"conf_del_{i}_{lid}", on_click=del_link, args=(i, lid))
+
+                    result_rows.append({
+                        'Site': site, 'Technologie': techno, 'Débit': debit,
+                        'Opérateur': op, 'Marge %': marge_site, "Frais d'accès": fas, 'Prix mensuel': abo
+                    })
 
             st.divider()
             result_df = pd.DataFrame(result_rows)
@@ -632,12 +681,18 @@ if uploaded_file:
                 'debit_ftto_global': st.session_state.get('conf_debit_ftto_global'),
             }}
             for i, site in enumerate(sites_all):
+                links = st.session_state.get(f'conf_links_{i}', [{'id': 0}])
                 config_save[site] = {
-                    'techno': st.session_state.get(f'conf_techno_{i}'),
-                    'debit': st.session_state.get(f'conf_debit_{i}'),
-                    'force': st.session_state.get(f'conf_force_{i}', False),
-                    'op': st.session_state.get(f'conf_op_{i}'),
-                    'marge': st.session_state.get(f'conf_marge_site_{i}'),
+                    'links': [
+                        {
+                            'techno': st.session_state.get(f'conf_techno_{i}_{l["id"]}'),
+                            'debit': st.session_state.get(f'conf_debit_{i}_{l["id"]}'),
+                            'force': st.session_state.get(f'conf_force_{i}_{l["id"]}', False),
+                            'op': st.session_state.get(f'conf_op_{i}_{l["id"]}'),
+                            'marge': st.session_state.get(f'conf_marge_site_{i}_{l["id"]}'),
+                        }
+                        for l in links
+                    ]
                 }
             st.download_button("💾 Sauvegarder la configuration", data=json.dumps(config_save, ensure_ascii=False, indent=2),
                                file_name="config_offre_client.json", mime="application/json", key="dl_conf_save")
