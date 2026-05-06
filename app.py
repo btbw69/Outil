@@ -449,6 +449,7 @@ if uploaded_file:
                     p = config_data['_params']
                     if p.get('nouvelle_marge'): st.session_state['conf_nouvelle_marge'] = p['nouvelle_marge']
                     if p.get('debit_ftto_global'): st.session_state['conf_debit_ftto_global'] = p['debit_ftto_global']
+                del st.session_state['conf_load']
                 st.rerun()
 
             st.divider()
