@@ -707,8 +707,14 @@ if uploaded_file:
             ws_conf = wb_conf.active
             export_df = result_df if show_op else result_df.drop(columns=['Opérateur'])
             ws_conf.append(list(export_df.columns))
+            prev_site = None
             for row in export_df.itertuples(index=False):
-                ws_conf.append(list(row))
+                row_list = list(row)
+                if row_list[0] == prev_site:
+                    row_list[0] = ''
+                else:
+                    prev_site = row_list[0]
+                ws_conf.append(row_list)
             center = Alignment(horizontal='center', vertical='center')
             for i, col in enumerate(ws_conf.columns, 1):
                 max_len = max((len(str(cell.value)) if cell.value is not None else 0) for cell in col)
