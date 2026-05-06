@@ -675,6 +675,17 @@ if uploaded_file:
             st.divider()
             result_df = pd.DataFrame(result_rows)
 
+            # Ligne de total
+            total_fas = result_df["Frais d'accès"].sum()
+            total_abo = result_df["Prix mensuel"].sum()
+            tot_cols = st.columns([2, 1.2, 0.35, 1.2, 1.5, 1.5, 1, 1, 1, 0.4])
+            with tot_cols[6]:
+                st.markdown("**Total**")
+            with tot_cols[7]:
+                st.markdown(f"**{total_fas:.2f} €**")
+            with tot_cols[8]:
+                st.markdown(f"**{total_abo:.2f} €**")
+
             # Sauvegarde de la configuration
             config_save = {'_params': {
                 'nouvelle_marge': st.session_state.get('conf_nouvelle_marge', ''),
@@ -715,7 +726,21 @@ if uploaded_file:
                 else:
                     prev_site = row_list[0]
                 ws_conf.append(row_list)
+            # Ligne de total dans l'Excel
+            fas_col_idx = list(export_df.columns).index("Frais d'accès")
+            abo_col_idx = list(export_df.columns).index("Prix mensuel")
+            marge_col_idx = list(export_df.columns).index("Marge %")
+            total_row = [''] * len(export_df.columns)
+            total_row[marge_col_idx] = 'Total'
+            total_row[fas_col_idx] = round(total_fas, 2)
+            total_row[abo_col_idx] = round(total_abo, 2)
+            ws_conf.append(total_row)
             center = Alignment(horizontal='center', vertical='center')
+            from openpyxl.styles import Font as XlFont
+            bold = XlFont(bold=True)
+            last_row = ws_conf.max_row
+            for cell in ws_conf[last_row]:
+                cell.font = bold
             for i, col in enumerate(ws_conf.columns, 1):
                 max_len = max((len(str(cell.value)) if cell.value is not None else 0) for cell in col)
                 ws_conf.column_dimensions[get_column_letter(i)].width = max_len + 3
