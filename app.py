@@ -526,6 +526,12 @@ if uploaded_file:
             else:
                 default_marge_site = marge_conf or 25.0
 
+            # Initialiser le session state pour chaque site si pas encore défini
+            for i in range(len(sites_all)):
+                key = f"conf_marge_site_{i}"
+                if key not in st.session_state:
+                    st.session_state[key] = float(default_marge_site)
+
             st.divider()
 
             sites = df['Site'].dropna().unique()
@@ -578,8 +584,8 @@ if uploaded_file:
 
                 with cols[5]:
                     marge_site = st.number_input("M", min_value=0.0, max_value=99.9,
-                                                  value=float(default_marge_site), step=0.1,
-                                                  key=f"conf_marge_site_{i}", label_visibility="collapsed")
+                                                  step=0.1, key=f"conf_marge_site_{i}",
+                                                  label_visibility="collapsed")
 
                 # Recalcul : ôter marge actuelle puis appliquer marge site
                 if marge_conf is not None and marge_site < 100:
