@@ -687,8 +687,8 @@ if uploaded_file:
             with tot_cols[8]:
                 st.markdown(f"**{total_abo:.2f} €**")
 
-            # Stocker le résultat pour l'onglet Devis
-            st.session_state['conf_result_df'] = result_df
+            # Stocker le résultat en live pour l'onglet Devis (snapshot à l'import)
+            st.session_state['conf_result_df_live'] = result_df
 
             # Sauvegarde de la configuration
             config_save = {'_params': {
@@ -839,6 +839,7 @@ if uploaded_file:
         st.divider()
         if st.button("📥 Importer données configurateur"):
             st.session_state['devis_show_conf'] = True
+            st.session_state['conf_result_df'] = st.session_state.get('conf_result_df_live')
 
         if st.session_state.get('devis_show_conf') and 'conf_result_df' in st.session_state:
             conf_df = st.session_state['conf_result_df']
