@@ -561,6 +561,11 @@ if uploaded_file:
                         val = float(val_str.replace(',', '.'))
                         for key in list(st.session_state.keys()):
                             if key.startswith("conf_marge_fas_") or key.startswith("conf_marge_abo_"):
+                                parts = key.split('_')
+                                if len(parts) >= 5:
+                                    lock_key = f'conf_lock_{parts[3]}_{parts[4]}'
+                                    if st.session_state.get(lock_key, False):
+                                        continue
                                 st.session_state[key] = val
                     except ValueError:
                         pass
@@ -572,6 +577,8 @@ if uploaded_file:
                     for si, site_loc in enumerate(sites_loc):
                         for lnk in st.session_state.get(f'conf_links_{si}', [{'id': 0}]):
                             lid = lnk['id']
+                            if st.session_state.get(f'conf_lock_{si}_{lid}', False):
+                                continue
                             if st.session_state.get(f"conf_techno_{si}_{lid}", "") == 'FTTO':
                                 debits_site = sort_debits(df[(df['Site'] == site_loc) & (df['Technologie'] == 'FTTO')]['Débit'].dropna().unique())
                                 if debit_ftto in debits_site:
