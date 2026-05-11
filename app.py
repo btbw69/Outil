@@ -186,7 +186,7 @@ if uploaded_file:
             for ol in old_links:
                 for k in [f'conf_techno_{i}_{ol["id"]}', f'conf_debit_{i}_{ol["id"]}',
                            f'conf_force_{i}_{ol["id"]}', f'conf_op_{i}_{ol["id"]}',
-                           f'conf_marge_site_{i}_{ol["id"]}']:
+                           f'conf_marge_fas_{i}_{ol["id"]}', f'conf_marge_abo_{i}_{ol["id"]}']:
                     st.session_state.pop(k, None)
             # Compat ancienne format (clés sans lid)
             for k in [f'conf_techno_{i}', f'conf_debit_{i}', f'conf_force_{i}',
@@ -203,7 +203,16 @@ if uploaded_file:
                     if ld.get('debit'): st.session_state[f'conf_debit_{i}_{lid}'] = ld['debit']
                     st.session_state[f'conf_force_{i}_{lid}'] = ld.get('force', False)
                     if ld.get('op'): st.session_state[f'conf_op_{i}_{lid}'] = ld['op']
-                    if ld.get('marge') is not None: st.session_state[f'conf_marge_site_{i}_{lid}'] = float(ld['marge'])
+                    # compat ancien format (marge unique)
+                    old_marge = ld.get('marge')
+                    if ld.get('marge_fas') is not None:
+                        st.session_state[f'conf_marge_fas_{i}_{lid}'] = float(ld['marge_fas'])
+                    elif old_marge is not None:
+                        st.session_state[f'conf_marge_fas_{i}_{lid}'] = float(old_marge)
+                    if ld.get('marge_abo') is not None:
+                        st.session_state[f'conf_marge_abo_{i}_{lid}'] = float(ld['marge_abo'])
+                    elif old_marge is not None:
+                        st.session_state[f'conf_marge_abo_{i}_{lid}'] = float(old_marge)
                 st.session_state[f'conf_links_{i}'] = new_links
                 st.session_state[f'conf_link_counter_{i}'] = len(links_data)
         if '_params' in pending:
@@ -526,7 +535,7 @@ if uploaded_file:
                     try:
                         val = float(val_str.replace(',', '.'))
                         for key in list(st.session_state.keys()):
-                            if key.startswith("conf_marge_site_"):
+                            if key.startswith("conf_marge_fas_") or key.startswith("conf_marge_abo_"):
                                 st.session_state[key] = val
                     except ValueError:
                         pass
@@ -555,7 +564,7 @@ if uploaded_file:
                 st.session_state[lk] = [l for l in st.session_state[lk] if l['id'] != link_id]
                 for k in [f'conf_techno_{site_i}_{link_id}', f'conf_debit_{site_i}_{link_id}',
                            f'conf_force_{site_i}_{link_id}', f'conf_op_{site_i}_{link_id}',
-                           f'conf_marge_site_{site_i}_{link_id}']:
+                           f'conf_marge_fas_{site_i}_{link_id}', f'conf_marge_abo_{site_i}_{link_id}']:
                     st.session_state.pop(k, None)
 
             col_params, col_ftto, col_space = st.columns([1, 1, 2])
@@ -580,9 +589,9 @@ if uploaded_file:
                     st.session_state[f'conf_links_{i}'] = [{'id': 0}]
                     st.session_state[f'conf_link_counter_{i}'] = 1
                 for lnk in st.session_state[f'conf_links_{i}']:
-                    mk = f"conf_marge_site_{i}_{lnk['id']}"
-                    if mk not in st.session_state:
-                        st.session_state[mk] = float(default_marge_site)
+                    for mk in [f"conf_marge_fas_{i}_{lnk['id']}", f"conf_marge_abo_{i}_{lnk['id']}"]:
+                        if mk not in st.session_state:
+                            st.session_state[mk] = float(default_marge_site)
 
             st.divider()
 
@@ -590,8 +599,8 @@ if uploaded_file:
             ordre_techno = {'FTTO': 0, 'FTTH': 1}
 
             # En-têtes
-            h = st.columns([2, 1.2, 0.35, 1.2, 1.5, 1.5, 1, 1, 1, 0.4])
-            for col, label in zip(h, ["Site", "Technologie", "", "Débit", "Forcer opérateur ?", "Opérateur", "Marge %", "FAS", "Abo", ""]):
+            h = st.columns([2, 1.2, 0.35, 1.2, 1.5, 1.5, 0.8, 1, 0.8, 1, 0.4])
+            for col, label in zip(h, ["Site", "Technologie", "", "Débit", "Forcer opérateur ?", "Opérateur", "M. FAS", "FAS", "M. Abo", "Abo", ""]):
                 col.markdown(f"**{label}**")
             st.divider()
 
@@ -603,7 +612,7 @@ if uploaded_file:
 
                 for j_idx, lnk in enumerate(links):
                     lid = lnk['id']
-                    cols = st.columns([2, 1.2, 0.35, 1.2, 1.5, 1.5, 1, 1, 1, 0.4])
+                    cols = st.columns([2, 1.2, 0.35, 1.2, 1.5, 1.5, 0.8, 1, 0.8, 1, 0.4])
 
                     with cols[0]:
                         if j_idx == 0:
@@ -645,32 +654,36 @@ if uploaded_file:
                     abo_brut = ligne['Prix mensuel'].values[0] if not ligne.empty else 0
 
                     with cols[6]:
-                        marge_site = st.number_input("M", min_value=0.0, max_value=99.9,
-                                                      step=0.1, key=f"conf_marge_site_{i}_{lid}",
-                                                      label_visibility="collapsed")
+                        marge_fas = st.number_input("MF", min_value=0.0, max_value=99.9,
+                                                     step=0.1, key=f"conf_marge_fas_{i}_{lid}",
+                                                     label_visibility="collapsed")
+                    with cols[8]:
+                        marge_abo = st.number_input("MA", min_value=0.0, max_value=99.9,
+                                                     step=0.1, key=f"conf_marge_abo_{i}_{lid}",
+                                                     label_visibility="collapsed")
 
-                    if marge_conf is not None and marge_site < 100:
+                    if marge_conf is not None:
                         taux_actuel = marge_conf / 100
-                        taux_site = marge_site / 100
-                        fas = round(fas_brut * (1 - taux_actuel) / (1 - taux_site), 2)
-                        abo = round(abo_brut * (1 - taux_actuel) / (1 - taux_site), 2)
+                        fas = round(fas_brut * (1 - taux_actuel) / (1 - marge_fas / 100), 2) if marge_fas < 100 else fas_brut
+                        abo = round(abo_brut * (1 - taux_actuel) / (1 - marge_abo / 100), 2) if marge_abo < 100 else abo_brut
                     else:
                         fas, abo = fas_brut, abo_brut
 
                     with cols[7]:
                         st.markdown(f"{fas:.2f} €")
 
-                    with cols[8]:
+                    with cols[9]:
                         st.markdown(f"{abo:.2f} €")
 
-                    with cols[9]:
+                    with cols[10]:
                         if n_links > 1:
                             st.markdown("<br>", unsafe_allow_html=True)
                             st.button("－", key=f"conf_del_{i}_{lid}", on_click=del_link, args=(i, lid))
 
                     result_rows.append({
                         'Site': site, 'Technologie': techno, 'Débit': debit,
-                        'Opérateur': op, 'Marge %': marge_site, "Frais d'accès": fas, 'Prix mensuel': abo
+                        'Opérateur': op, 'Marge FAS': marge_fas, "Frais d'accès": fas,
+                        'Marge Abo': marge_abo, 'Prix mensuel': abo
                     })
 
             st.divider()
@@ -679,12 +692,12 @@ if uploaded_file:
             # Ligne de total
             total_fas = result_df["Frais d'accès"].sum()
             total_abo = result_df["Prix mensuel"].sum()
-            tot_cols = st.columns([2, 1.2, 0.35, 1.2, 1.5, 1.5, 1, 1, 1, 0.4])
+            tot_cols = st.columns([2, 1.2, 0.35, 1.2, 1.5, 1.5, 0.8, 1, 0.8, 1, 0.4])
             with tot_cols[6]:
                 st.markdown("**Total**")
             with tot_cols[7]:
                 st.markdown(f"**{total_fas:.2f} €**")
-            with tot_cols[8]:
+            with tot_cols[9]:
                 st.markdown(f"**{total_abo:.2f} €**")
 
             # Stocker le résultat en live pour l'onglet Devis (snapshot à l'import)
@@ -704,7 +717,8 @@ if uploaded_file:
                             'debit': st.session_state.get(f'conf_debit_{i}_{l["id"]}'),
                             'force': st.session_state.get(f'conf_force_{i}_{l["id"]}', False),
                             'op': st.session_state.get(f'conf_op_{i}_{l["id"]}'),
-                            'marge': st.session_state.get(f'conf_marge_site_{i}_{l["id"]}'),
+                            'marge_fas': st.session_state.get(f'conf_marge_fas_{i}_{l["id"]}'),
+                            'marge_abo': st.session_state.get(f'conf_marge_abo_{i}_{l["id"]}'),
                         }
                         for l in links
                     ]
@@ -731,11 +745,11 @@ if uploaded_file:
                     prev_site = row_list[0]
                 ws_conf.append(row_list)
             # Ligne de total dans l'Excel
-            fas_col_idx = list(export_df.columns).index("Frais d'accès")
-            abo_col_idx = list(export_df.columns).index("Prix mensuel")
-            marge_col_idx = list(export_df.columns).index("Marge %")
-            total_row = [''] * len(export_df.columns)
-            total_row[marge_col_idx] = 'Total'
+            cols_list = list(export_df.columns)
+            fas_col_idx = cols_list.index("Frais d'accès")
+            abo_col_idx = cols_list.index("Prix mensuel")
+            total_row = [''] * len(cols_list)
+            total_row[0] = 'Total'
             total_row[fas_col_idx] = round(total_fas, 2)
             total_row[abo_col_idx] = round(total_abo, 2)
             ws_conf.append(total_row)
