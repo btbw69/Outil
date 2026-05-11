@@ -569,6 +569,13 @@ if uploaded_file:
                                     if st.session_state.get(lock_key, False):
                                         continue
                                 st.session_state[key] = val
+                                if len(parts) >= 5:
+                                    sfx = 'fas' if parts[2] == 'fas' else 'abo'
+                                    cout_k = f'conf_cout_{sfx}_{parts[3]}_{parts[4]}'
+                                    price_k = f'conf_{sfx}_price_{parts[3]}_{parts[4]}'
+                                    cout = st.session_state.get(cout_k, 0.0)
+                                    if cout and cout > 0 and val < 100:
+                                        st.session_state[price_k] = round(cout / (1 - val / 100), 2)
                     except ValueError:
                         pass
 
@@ -586,6 +593,32 @@ if uploaded_file:
                                 if debit_ftto in debits_site:
                                     st.session_state[f"conf_debit_{si}_{lid}"] = debit_ftto
 
+            def on_marge_fas_change(site_i, link_id):
+                marge = st.session_state.get(f'conf_marge_fas_{site_i}_{link_id}', 0.0)
+                cout = st.session_state.get(f'conf_cout_fas_{site_i}_{link_id}', 0.0)
+                if cout and cout > 0 and marge < 100:
+                    st.session_state[f'conf_fas_price_{site_i}_{link_id}'] = round(cout / (1 - marge / 100), 2)
+
+            def on_marge_abo_change(site_i, link_id):
+                marge = st.session_state.get(f'conf_marge_abo_{site_i}_{link_id}', 0.0)
+                cout = st.session_state.get(f'conf_cout_abo_{site_i}_{link_id}', 0.0)
+                if cout and cout > 0 and marge < 100:
+                    st.session_state[f'conf_abo_price_{site_i}_{link_id}'] = round(cout / (1 - marge / 100), 2)
+
+            def on_fas_price_change(site_i, link_id):
+                price = st.session_state.get(f'conf_fas_price_{site_i}_{link_id}', 0.0)
+                cout = st.session_state.get(f'conf_cout_fas_{site_i}_{link_id}', 0.0)
+                if price and price > 0 and cout is not None:
+                    new_marge = (1 - cout / price) * 100
+                    st.session_state[f'conf_marge_fas_{site_i}_{link_id}'] = round(max(0.0, min(99.9, new_marge)), 1)
+
+            def on_abo_price_change(site_i, link_id):
+                price = st.session_state.get(f'conf_abo_price_{site_i}_{link_id}', 0.0)
+                cout = st.session_state.get(f'conf_cout_abo_{site_i}_{link_id}', 0.0)
+                if price and price > 0 and cout is not None:
+                    new_marge = (1 - cout / price) * 100
+                    st.session_state[f'conf_marge_abo_{site_i}_{link_id}'] = round(max(0.0, min(99.9, new_marge)), 1)
+
             def add_link(site_i):
                 ck = f'conf_link_counter_{site_i}'
                 lk = f'conf_links_{site_i}'
@@ -599,10 +632,13 @@ if uploaded_file:
                 for k in [f'conf_techno_{site_i}_{link_id}', f'conf_debit_{site_i}_{link_id}',
                            f'conf_force_{site_i}_{link_id}', f'conf_op_{site_i}_{link_id}',
                            f'conf_marge_fas_{site_i}_{link_id}', f'conf_marge_abo_{site_i}_{link_id}',
+                           f'conf_fas_price_{site_i}_{link_id}', f'conf_abo_price_{site_i}_{link_id}',
+                           f'conf_cout_fas_{site_i}_{link_id}', f'conf_cout_abo_{site_i}_{link_id}',
                            f'conf_lock_{site_i}_{link_id}',
                            f'conf_snap_techno_{site_i}_{link_id}', f'conf_snap_debit_{site_i}_{link_id}',
                            f'conf_snap_force_{site_i}_{link_id}', f'conf_snap_op_{site_i}_{link_id}',
-                           f'conf_snap_marge_fas_{site_i}_{link_id}', f'conf_snap_marge_abo_{site_i}_{link_id}']:
+                           f'conf_snap_marge_fas_{site_i}_{link_id}', f'conf_snap_marge_abo_{site_i}_{link_id}',
+                           f'conf_snap_fas_price_{site_i}_{link_id}', f'conf_snap_abo_price_{site_i}_{link_id}']:
                     st.session_state.pop(k, None)
 
             def on_lock_toggle(site_i, link_id):
@@ -613,13 +649,13 @@ if uploaded_file:
                         if wk in st.session_state:
                             st.session_state[f'conf_snap_{sfx}_{site_i}_{link_id}'] = st.session_state[wk]
                     st.session_state[f'conf_snap_force_{site_i}_{link_id}'] = st.session_state.get(f'conf_force_{site_i}_{link_id}', False)
-                    for sfx in ['marge_fas', 'marge_abo']:
+                    for sfx in ['marge_fas', 'marge_abo', 'fas_price', 'abo_price']:
                         wk = f'conf_{sfx}_{site_i}_{link_id}'
                         if wk in st.session_state:
                             st.session_state[f'conf_snap_{sfx}_{site_i}_{link_id}'] = float(st.session_state[wk])
                 else:
                     # Déverrouillage : restaurer les snapshots vers les clés widget
-                    for sfx in ['techno', 'debit', 'op', 'force', 'marge_fas', 'marge_abo']:
+                    for sfx in ['techno', 'debit', 'op', 'force', 'marge_fas', 'marge_abo', 'fas_price', 'abo_price']:
                         sk = f'conf_snap_{sfx}_{site_i}_{link_id}'
                         if sk in st.session_state:
                             st.session_state[f'conf_{sfx}_{site_i}_{link_id}'] = st.session_state[sk]
@@ -742,35 +778,60 @@ if uploaded_file:
                     fas_brut = ligne["Frais d'accès"].values[0] if not ligne.empty else 0
                     abo_brut = ligne['Prix mensuel'].values[0] if not ligne.empty else 0
 
+                    # Coût réel (base de calcul des marges)
+                    cout_fas = fas_brut * (1 - marge_conf / 100) if marge_conf is not None else fas_brut
+                    cout_abo = abo_brut * (1 - marge_conf / 100) if marge_conf is not None else abo_brut
+
                     if locked:
                         marge_fas = float(st.session_state.get(f'conf_snap_marge_fas_{i}_{lid}',
                                                                 st.session_state.get(f'conf_marge_fas_{i}_{lid}', 0.0)))
                         marge_abo = float(st.session_state.get(f'conf_snap_marge_abo_{i}_{lid}',
                                                                 st.session_state.get(f'conf_marge_abo_{i}_{lid}', 0.0)))
+                        fas = float(st.session_state.get(f'conf_snap_fas_price_{i}_{lid}',
+                                                          st.session_state.get(f'conf_fas_price_{i}_{lid}',
+                                                          round(cout_fas / (1 - marge_fas / 100), 2) if marge_fas < 100 and cout_fas > 0 else cout_fas)))
+                        abo = float(st.session_state.get(f'conf_snap_abo_price_{i}_{lid}',
+                                                          st.session_state.get(f'conf_abo_price_{i}_{lid}',
+                                                          round(cout_abo / (1 - marge_abo / 100), 2) if marge_abo < 100 and cout_abo > 0 else cout_abo)))
                         cols[6].markdown(f"{marge_fas:.1f}%")
+                        cols[7].markdown(f"{fas:.2f} €")
                         cols[8].markdown(f"{marge_abo:.1f}%")
+                        cols[9].markdown(f"{abo:.2f} €")
                     else:
+                        # Stocker les coûts pour les callbacks (besoin pour recalcul)
+                        st.session_state[f'conf_cout_fas_{i}_{lid}'] = cout_fas
+                        st.session_state[f'conf_cout_abo_{i}_{lid}'] = cout_abo
+                        # Initialiser ou recalculer le prix si la base a changé
+                        for sfx, cout_val, price_k, marge_k in [
+                            ('fas', cout_fas, f'conf_fas_price_{i}_{lid}', f'conf_marge_fas_{i}_{lid}'),
+                            ('abo', cout_abo, f'conf_abo_price_{i}_{lid}', f'conf_marge_abo_{i}_{lid}'),
+                        ]:
+                            prev_cout = st.session_state.get(f'conf_cout_{sfx}_prev_{i}_{lid}')
+                            st.session_state[f'conf_cout_{sfx}_prev_{i}_{lid}'] = cout_val
+                            if prev_cout is None or abs(float(prev_cout) - cout_val) > 0.001 or price_k not in st.session_state:
+                                marge = float(st.session_state.get(marge_k, 0.0))
+                                computed = round(cout_val / (1 - marge / 100), 2) if marge < 100 and cout_val > 0 else cout_val
+                                st.session_state[price_k] = computed
                         with cols[6]:
                             marge_fas = st.number_input("MF", min_value=0.0, max_value=99.9,
                                                          step=0.1, key=f"conf_marge_fas_{i}_{lid}",
+                                                         on_change=on_marge_fas_change, args=(i, lid),
                                                          label_visibility="collapsed")
+                        with cols[7]:
+                            fas = st.number_input("FAS", min_value=0.0, step=0.01,
+                                                   key=f'conf_fas_price_{i}_{lid}',
+                                                   on_change=on_fas_price_change, args=(i, lid),
+                                                   label_visibility="collapsed")
                         with cols[8]:
                             marge_abo = st.number_input("MA", min_value=0.0, max_value=99.9,
                                                          step=0.1, key=f"conf_marge_abo_{i}_{lid}",
+                                                         on_change=on_marge_abo_change, args=(i, lid),
                                                          label_visibility="collapsed")
-
-                    if marge_conf is not None:
-                        taux_actuel = marge_conf / 100
-                        fas = round(fas_brut * (1 - taux_actuel) / (1 - marge_fas / 100), 2) if marge_fas < 100 else fas_brut
-                        abo = round(abo_brut * (1 - taux_actuel) / (1 - marge_abo / 100), 2) if marge_abo < 100 else abo_brut
-                    else:
-                        fas, abo = fas_brut, abo_brut
-
-                    with cols[7]:
-                        st.markdown(f"{fas:.2f} €")
-
-                    with cols[9]:
-                        st.markdown(f"{abo:.2f} €")
+                        with cols[9]:
+                            abo = st.number_input("Abo", min_value=0.0, step=0.01,
+                                                   key=f'conf_abo_price_{i}_{lid}',
+                                                   on_change=on_abo_price_change, args=(i, lid),
+                                                   label_visibility="collapsed")
 
                     with cols[10]:
                         if n_links > 1 and not locked:
