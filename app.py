@@ -787,7 +787,7 @@ if uploaded_file:
     # Onglet 6 : Devis
     with onglets[5]:
         st.markdown("### Devis")
-        st.markdown("#### Informations vendeur")
+        st.markdown("#### NXO FRANCE")
         col1, col2 = st.columns(2)
         with col1:
             devis_agence = st.text_input("Agence", key="devis_agence")
