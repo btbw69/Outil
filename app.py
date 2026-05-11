@@ -180,14 +180,18 @@ if uploaded_file:
         pending = st.session_state.pop('conf_pending')
         sites_temp = df['Site'].dropna().unique()
         for i, site in enumerate(sites_temp):
-            # Effacer l'ancien état des liens
+            # Effacer l'ancien état des liens (sauf ceux verrouillés)
             old_links = st.session_state.pop(f'conf_links_{i}', [{'id': 0}])
             st.session_state.pop(f'conf_link_counter_{i}', None)
-            for ol in old_links:
-                for k in [f'conf_techno_{i}_{ol["id"]}', f'conf_debit_{i}_{ol["id"]}',
-                           f'conf_force_{i}_{ol["id"]}', f'conf_op_{i}_{ol["id"]}',
-                           f'conf_marge_fas_{i}_{ol["id"]}', f'conf_marge_abo_{i}_{ol["id"]}']:
-                    st.session_state.pop(k, None)
+            # Mémoriser les positions verrouillées avant de nettoyer
+            locked_positions = {j: ol['id'] for j, ol in enumerate(old_links)
+                                 if st.session_state.get(f'conf_lock_{i}_{ol["id"]}', False)}
+            for j_pos, ol in enumerate(old_links):
+                if j_pos not in locked_positions:
+                    for k in [f'conf_techno_{i}_{ol["id"]}', f'conf_debit_{i}_{ol["id"]}',
+                               f'conf_force_{i}_{ol["id"]}', f'conf_op_{i}_{ol["id"]}',
+                               f'conf_marge_fas_{i}_{ol["id"]}', f'conf_marge_abo_{i}_{ol["id"]}']:
+                        st.session_state.pop(k, None)
             # Compat ancienne format (clés sans lid)
             for k in [f'conf_techno_{i}', f'conf_debit_{i}', f'conf_force_{i}',
                        f'conf_op_{i}', f'conf_marge_site_{i}']:
@@ -199,6 +203,15 @@ if uploaded_file:
                 for j, ld in enumerate(links_data):
                     lid = j
                     new_links.append({'id': lid})
+                    if j in locked_positions:
+                        old_lid = locked_positions[j]
+                        if old_lid != lid:
+                            for sfx in ['techno', 'debit', 'force', 'op', 'marge_fas', 'marge_abo', 'lock']:
+                                ok = f'conf_{sfx}_{i}_{old_lid}'
+                                if ok in st.session_state:
+                                    st.session_state[f'conf_{sfx}_{i}_{lid}'] = st.session_state.pop(ok)
+                            st.session_state[f'conf_lock_{i}_{lid}'] = True
+                        continue  # ligne verrouillée : on garde ses valeurs
                     if ld.get('techno'): st.session_state[f'conf_techno_{i}_{lid}'] = ld['techno']
                     if ld.get('debit'): st.session_state[f'conf_debit_{i}_{lid}'] = ld['debit']
                     st.session_state[f'conf_force_{i}_{lid}'] = ld.get('force', False)
@@ -213,8 +226,20 @@ if uploaded_file:
                         st.session_state[f'conf_marge_abo_{i}_{lid}'] = float(ld['marge_abo'])
                     elif old_marge is not None:
                         st.session_state[f'conf_marge_abo_{i}_{lid}'] = float(old_marge)
+                # Garder les liens verrouillés qui dépassent la longueur du nouveau config
+                for j_pos, old_lid in locked_positions.items():
+                    if j_pos >= len(links_data):
+                        lid = j_pos
+                        new_links.append({'id': lid})
+                        if old_lid != lid:
+                            for sfx in ['techno', 'debit', 'force', 'op', 'marge_fas', 'marge_abo', 'lock']:
+                                ok = f'conf_{sfx}_{i}_{old_lid}'
+                                if ok in st.session_state:
+                                    st.session_state[f'conf_{sfx}_{i}_{lid}'] = st.session_state.pop(ok)
+                            st.session_state[f'conf_lock_{i}_{lid}'] = True
+                new_links.sort(key=lambda x: x['id'])
                 st.session_state[f'conf_links_{i}'] = new_links
-                st.session_state[f'conf_link_counter_{i}'] = len(links_data)
+                st.session_state[f'conf_link_counter_{i}'] = len(new_links)
         if '_params' in pending:
             p = pending['_params']
             for k in ['conf_nouvelle_marge', 'conf_debit_ftto_global']:
@@ -599,8 +624,8 @@ if uploaded_file:
             ordre_techno = {'FTTO': 0, 'FTTH': 1}
 
             # En-têtes
-            h = st.columns([2, 1.2, 0.35, 1.2, 1.5, 1.5, 0.8, 1, 0.8, 1, 0.4])
-            for col, label in zip(h, ["Site", "Technologie", "", "Débit", "Forcer opérateur ?", "Opérateur", "M. FAS", "FAS", "M. Abo", "Abo", ""]):
+            h = st.columns([2, 1.2, 0.35, 1.2, 1.5, 1.5, 0.8, 1, 0.8, 1, 0.4, 0.8])
+            for col, label in zip(h, ["Site", "Technologie", "", "Débit", "Forcer opérateur ?", "Opérateur", "M. FAS", "FAS", "M. Abo", "Abo", "", "🔒"]):
                 col.markdown(f"**{label}**")
             st.divider()
 
@@ -612,34 +637,55 @@ if uploaded_file:
 
                 for j_idx, lnk in enumerate(links):
                     lid = lnk['id']
-                    cols = st.columns([2, 1.2, 0.35, 1.2, 1.5, 1.5, 0.8, 1, 0.8, 1, 0.4])
+                    cols = st.columns([2, 1.2, 0.35, 1.2, 1.5, 1.5, 0.8, 1, 0.8, 1, 0.4, 0.8])
+
+                    with cols[11]:
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        locked = st.checkbox("🔒", key=f"conf_lock_{i}_{lid}", label_visibility="collapsed")
 
                     with cols[0]:
                         if j_idx == 0:
                             st.markdown(f"{site}")
 
-                    with cols[1]:
-                        technos = sorted(df_site['Technologie'].dropna().unique(), key=lambda t: ordre_techno.get(t, 99))
-                        techno = st.selectbox("T", options=technos, key=f"conf_techno_{i}_{lid}", label_visibility="collapsed")
+                    technos = sorted(df_site['Technologie'].dropna().unique(), key=lambda t: ordre_techno.get(t, 99))
 
-                    with cols[2]:
-                        st.markdown("<br>", unsafe_allow_html=True)
-                        st.button("＋", key=f"conf_add_{i}_{lid}", on_click=add_link, args=(i,))
+                    if locked:
+                        techno = st.session_state.get(f'conf_techno_{i}_{lid}', technos[0] if technos else '')
+                        cols[1].markdown(str(techno))
+                    else:
+                        with cols[1]:
+                            techno = st.selectbox("T", options=technos, key=f"conf_techno_{i}_{lid}", label_visibility="collapsed")
+                        with cols[2]:
+                            st.markdown("<br>", unsafe_allow_html=True)
+                            st.button("＋", key=f"conf_add_{i}_{lid}", on_click=add_link, args=(i,))
 
-                    with cols[3]:
-                        df_site_tech = df_site[df_site['Technologie'] == techno]
-                        debits = sort_debits(df_site_tech['Débit'].dropna().unique())
-                        debit = st.selectbox("D", options=debits, key=f"conf_debit_{i}_{lid}", label_visibility="collapsed")
+                    df_site_tech = df_site[df_site['Technologie'] == techno]
+                    debits = sort_debits(df_site_tech['Débit'].dropna().unique())
 
-                    with cols[4]:
-                        st.markdown("<br>", unsafe_allow_html=True)
-                        force = st.checkbox("Forcer", key=f"conf_force_{i}_{lid}", label_visibility="collapsed")
+                    if locked:
+                        debit = st.session_state.get(f'conf_debit_{i}_{lid}', debits[0] if debits else '')
+                        force = st.session_state.get(f'conf_force_{i}_{lid}', False)
+                        cols[3].markdown(str(debit))
+                        cols[4].markdown("✓" if force else "")
+                    else:
+                        with cols[3]:
+                            debit = st.selectbox("D", options=debits, key=f"conf_debit_{i}_{lid}", label_visibility="collapsed")
+                        with cols[4]:
+                            st.markdown("<br>", unsafe_allow_html=True)
+                            force = st.checkbox("Forcer", key=f"conf_force_{i}_{lid}", label_visibility="collapsed")
 
                     df_td = df_site_tech[df_site_tech['Débit'] == debit].copy()
                     df_td["Frais d'accès"] = df_td["Frais d'accès"].fillna(0)
                     df_td['Coût total'] = df_td['Prix mensuel'] * engagement + df_td["Frais d'accès"]
 
-                    if force:
+                    if locked:
+                        op = st.session_state.get(f'conf_op_{i}_{lid}', '')
+                        ligne = df_td[df_td['Opérateur'] == op] if op else df_td.sort_values('Coût total').iloc[:1]
+                        if ligne.empty:
+                            ligne = df_td.sort_values('Coût total').iloc[:1]
+                        op = ligne['Opérateur'].values[0] if not ligne.empty else op
+                        cols[5].markdown(str(op))
+                    elif force:
                         with cols[5]:
                             ops = df_td.sort_values('Coût total')['Opérateur'].dropna().unique()
                             op = st.selectbox("Op", options=list(ops), key=f"conf_op_{i}_{lid}", label_visibility="collapsed")
@@ -647,20 +693,25 @@ if uploaded_file:
                     else:
                         ligne = df_td.sort_values('Coût total').iloc[:1]
                         op = ligne['Opérateur'].values[0] if not ligne.empty else ''
-                        with cols[5]:
-                            st.markdown(op)
+                        cols[5].markdown(op)
 
                     fas_brut = ligne["Frais d'accès"].values[0] if not ligne.empty else 0
                     abo_brut = ligne['Prix mensuel'].values[0] if not ligne.empty else 0
 
-                    with cols[6]:
-                        marge_fas = st.number_input("MF", min_value=0.0, max_value=99.9,
-                                                     step=0.1, key=f"conf_marge_fas_{i}_{lid}",
-                                                     label_visibility="collapsed")
-                    with cols[8]:
-                        marge_abo = st.number_input("MA", min_value=0.0, max_value=99.9,
-                                                     step=0.1, key=f"conf_marge_abo_{i}_{lid}",
-                                                     label_visibility="collapsed")
+                    if locked:
+                        marge_fas = float(st.session_state.get(f'conf_marge_fas_{i}_{lid}', 0.0))
+                        marge_abo = float(st.session_state.get(f'conf_marge_abo_{i}_{lid}', 0.0))
+                        cols[6].markdown(f"{marge_fas:.1f}%")
+                        cols[8].markdown(f"{marge_abo:.1f}%")
+                    else:
+                        with cols[6]:
+                            marge_fas = st.number_input("MF", min_value=0.0, max_value=99.9,
+                                                         step=0.1, key=f"conf_marge_fas_{i}_{lid}",
+                                                         label_visibility="collapsed")
+                        with cols[8]:
+                            marge_abo = st.number_input("MA", min_value=0.0, max_value=99.9,
+                                                         step=0.1, key=f"conf_marge_abo_{i}_{lid}",
+                                                         label_visibility="collapsed")
 
                     if marge_conf is not None:
                         taux_actuel = marge_conf / 100
@@ -676,7 +727,7 @@ if uploaded_file:
                         st.markdown(f"{abo:.2f} €")
 
                     with cols[10]:
-                        if n_links > 1:
+                        if n_links > 1 and not locked:
                             st.markdown("<br>", unsafe_allow_html=True)
                             st.button("－", key=f"conf_del_{i}_{lid}", on_click=del_link, args=(i, lid))
 
@@ -692,7 +743,7 @@ if uploaded_file:
             # Ligne de total
             total_fas = result_df["Frais d'accès"].sum()
             total_abo = result_df["Prix mensuel"].sum()
-            tot_cols = st.columns([2, 1.2, 0.35, 1.2, 1.5, 1.5, 0.8, 1, 0.8, 1, 0.4])
+            tot_cols = st.columns([2, 1.2, 0.35, 1.2, 1.5, 1.5, 0.8, 1, 0.8, 1, 0.4, 0.8])
             with tot_cols[6]:
                 st.markdown("**Total**")
             with tot_cols[7]:
