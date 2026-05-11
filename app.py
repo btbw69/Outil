@@ -807,6 +807,28 @@ if uploaded_file:
             '$idquotation$': devis_numero,
         }
 
+        st.markdown("#### Client")
+        col3, col4 = st.columns(2)
+        with col3:
+            devis_nom_client = st.text_input("Nom", key="devis_nom_client")
+            devis_adresse_client = st.text_input("Adresse", key="devis_adresse_client")
+            devis_tel_client = st.text_input("Tél", key="devis_tel_client")
+            devis_courriel_client = st.text_input("Courriel", key="devis_courriel_client")
+        with col4:
+            devis_siren = st.text_input("SIREN", key="devis_siren")
+            devis_num_client = st.text_input("Numéro Client", key="devis_num_client")
+            devis_num_contrat = st.text_input("Numéro Contrat", key="devis_num_contrat")
+
+        devis_vars.update({
+            '$customerName$': devis_nom_client,
+            '$customerAddress$': devis_adresse_client,
+            '$customerInterlocutorPhoneNumber$': devis_tel_client,
+            '$customerInterlocutorMail$': devis_courriel_client,
+            '$siren$': devis_siren,
+            '$customerNumber$': devis_num_client,
+            '$contractNumber$': devis_num_contrat,
+        })
+
     # Onglet 7 : Proginov
     with onglets[6]:
         st.markdown("### Proginov")
