@@ -687,6 +687,9 @@ if uploaded_file:
             with tot_cols[8]:
                 st.markdown(f"**{total_abo:.2f} €**")
 
+            # Stocker le résultat pour l'onglet Devis
+            st.session_state['conf_result_df'] = result_df
+
             # Sauvegarde de la configuration
             config_save = {'_params': {
                 'nouvelle_marge': st.session_state.get('conf_nouvelle_marge', ''),
@@ -832,6 +835,39 @@ if uploaded_file:
         st.markdown("#### Commentaire")
         devis_commentaire = st.text_area("Commentaire pour le client", key="devis_commentaire", height=120)
         devis_vars['$commentForCustomer$'] = devis_commentaire
+
+        st.divider()
+        if st.button("📥 Importer données configurateur"):
+            st.session_state['devis_show_conf'] = True
+
+        if st.session_state.get('devis_show_conf') and 'conf_result_df' in st.session_state:
+            conf_df = st.session_state['conf_result_df']
+            st.markdown("#### Liens importés du configurateur")
+            h = st.columns([2, 1.2, 1.2, 1.5, 1, 1, 1])
+            for col, label in zip(h, ["Site", "Technologie", "Débit", "Opérateur", "Marge %", "FAS", "Abo"]):
+                col.markdown(f"**{label}**")
+            st.divider()
+            prev_site = None
+            for _, row in conf_df.iterrows():
+                cols = st.columns([2, 1.2, 1.2, 1.5, 1, 1, 1])
+                site_display = row['Site'] if row['Site'] != prev_site else ''
+                prev_site = row['Site']
+                cols[0].markdown(site_display)
+                cols[1].markdown(str(row['Technologie']))
+                cols[2].markdown(str(row['Débit']))
+                cols[3].markdown(str(row['Opérateur']))
+                cols[4].markdown(f"{row['Marge %']:.1f}%")
+                fas_val = row["Frais d'accès"]
+                cols[5].markdown(f"{fas_val:.2f} €")
+                cols[6].markdown(f"{row['Prix mensuel']:.2f} €")
+            st.divider()
+            tot_cols = st.columns([2, 1.2, 1.2, 1.5, 1, 1, 1])
+            tot_cols[4].markdown("**Total**")
+            total_fas_devis = conf_df["Frais d'accès"].sum()
+            tot_cols[5].markdown(f"**{total_fas_devis:.2f} €**")
+            tot_cols[6].markdown(f"**{conf_df['Prix mensuel'].sum():.2f} €**")
+        elif st.session_state.get('devis_show_conf'):
+            st.info("Aucune donnée dans le configurateur — configurez d'abord vos sites dans l'onglet 'Configurateur d'offre client'.")
 
     # Onglet 7 : Proginov
     with onglets[6]:
