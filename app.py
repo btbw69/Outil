@@ -787,7 +787,25 @@ if uploaded_file:
     # Onglet 6 : Devis
     with onglets[5]:
         st.markdown("### Devis")
-        st.info("Onglet en cours de construction — le générateur de devis PDF sera disponible ici.")
+        st.markdown("#### Informations vendeur")
+        col1, col2 = st.columns(2)
+        with col1:
+            devis_agence = st.text_input("Agence", key="devis_agence")
+            devis_adresse = st.text_input("Adresse", key="devis_adresse")
+            devis_interlocuteur = st.text_input("Interlocuteur", key="devis_interlocuteur")
+        with col2:
+            devis_tel = st.text_input("Tél", key="devis_tel")
+            devis_courriel = st.text_input("Courriel", key="devis_courriel")
+            devis_numero = st.text_input("Numéro du devis", key="devis_numero")
+
+        devis_vars = {
+            '$sellerLocation$': devis_agence,
+            '$sellerAddress$': devis_adresse,
+            '$sellerInterlocutor$': devis_interlocuteur,
+            '$sellerInterlocutorPhoneNumber$': devis_tel,
+            '$sellerInterlocutorMail$': devis_courriel,
+            '$idquotation$': devis_numero,
+        }
 
     # Onglet 7 : Proginov
     with onglets[6]:
