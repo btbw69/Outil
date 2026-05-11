@@ -829,6 +829,10 @@ if uploaded_file:
             '$contractNumber$': devis_num_contrat,
         })
 
+        st.markdown("#### Commentaire")
+        devis_commentaire = st.text_area("Commentaire pour le client", key="devis_commentaire", height=120)
+        devis_vars['$commentForCustomer$'] = devis_commentaire
+
     # Onglet 7 : Proginov
     with onglets[6]:
         st.markdown("### Proginov")
