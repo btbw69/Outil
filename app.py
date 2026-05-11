@@ -853,17 +853,26 @@ if uploaded_file:
         st.divider()
         if st.button("📥 Importer données configurateur"):
             st.session_state['devis_show_conf'] = True
-            st.session_state['conf_result_df'] = st.session_state.get('conf_result_df_live')
+            live_df = st.session_state.get('conf_result_df_live')
+            if live_df is not None:
+                snapshot = live_df.copy()
+                snapshot['cout_fas'] = snapshot["Frais d'accès"] * (1 - snapshot['Marge FAS'] / 100)
+                snapshot['cout_abo'] = snapshot['Prix mensuel'] * (1 - snapshot['Marge Abo'] / 100)
+                st.session_state['conf_result_df'] = snapshot
+            st.session_state['devis_edit_ctr'] = st.session_state.get('devis_edit_ctr', 0) + 1
 
         if st.session_state.get('devis_show_conf') and 'conf_result_df' in st.session_state:
             conf_df = st.session_state['conf_result_df']
+            edit_ctr = st.session_state.get('devis_edit_ctr', 0)
             st.markdown("#### Liens importés du configurateur")
             h = st.columns([2, 1.2, 1.2, 1.5, 0.8, 1, 0.8, 1])
             for col, label in zip(h, ["Site", "Technologie", "Débit", "Opérateur", "M. FAS", "FAS", "M. Abo", "Abo"]):
                 col.markdown(f"**{label}**")
             st.divider()
             prev_site = None
-            for _, row in conf_df.iterrows():
+            total_fas_devis = 0.0
+            total_abo_devis = 0.0
+            for idx, (_, row) in enumerate(conf_df.iterrows()):
                 cols = st.columns([2, 1.2, 1.2, 1.5, 0.8, 1, 0.8, 1])
                 site_display = row['Site'] if row['Site'] != prev_site else ''
                 prev_site = row['Site']
@@ -871,17 +880,33 @@ if uploaded_file:
                 cols[1].markdown(str(row['Technologie']))
                 cols[2].markdown(str(row['Débit']))
                 cols[3].markdown(str(row['Opérateur']))
-                cols[4].markdown(f"{row['Marge FAS']:.1f}%")
-                fas_val = row["Frais d'accès"]
-                cols[5].markdown(f"{fas_val:.2f} €")
-                cols[6].markdown(f"{row['Marge Abo']:.1f}%")
-                cols[7].markdown(f"{row['Prix mensuel']:.2f} €")
+
+                with cols[5]:
+                    fas_edit = st.number_input("FAS", value=float(row["Frais d'accès"]),
+                                               min_value=0.0, step=0.01,
+                                               key=f"devis_fas_{edit_ctr}_{idx}",
+                                               label_visibility="collapsed")
+                cout_fas = row['cout_fas']
+                marge_fas_calc = (1 - cout_fas / fas_edit) * 100 if fas_edit > 0 else 0.0
+                cols[4].markdown(f"{marge_fas_calc:.1f}%")
+
+                with cols[7]:
+                    abo_edit = st.number_input("Abo", value=float(row['Prix mensuel']),
+                                               min_value=0.0, step=0.01,
+                                               key=f"devis_abo_{edit_ctr}_{idx}",
+                                               label_visibility="collapsed")
+                cout_abo = row['cout_abo']
+                marge_abo_calc = (1 - cout_abo / abo_edit) * 100 if abo_edit > 0 else 0.0
+                cols[6].markdown(f"{marge_abo_calc:.1f}%")
+
+                total_fas_devis += fas_edit
+                total_abo_devis += abo_edit
+
             st.divider()
             tot_cols = st.columns([2, 1.2, 1.2, 1.5, 0.8, 1, 0.8, 1])
             tot_cols[4].markdown("**Total**")
-            total_fas_devis = conf_df["Frais d'accès"].sum()
             tot_cols[5].markdown(f"**{total_fas_devis:.2f} €**")
-            tot_cols[7].markdown(f"**{conf_df['Prix mensuel'].sum():.2f} €**")
+            tot_cols[7].markdown(f"**{total_abo_devis:.2f} €**")
         elif st.session_state.get('devis_show_conf'):
             st.info("Aucune donnée dans le configurateur — configurez d'abord vos sites dans l'onglet 'Configurateur d'offre client'.")
 
