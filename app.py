@@ -253,9 +253,9 @@ if uploaded_file:
         "FAS/ABO le moins cher - 1 ligne par site",
         "FAS/ABO le moins cher - 1 ligne par débit",
         "FAS/ABO le moins cher - Différentes Marges",
+        "Site Eligible pour un opérateur",
         "Configurateur d'offre client",
         "Devis",
-        "Site Eligible pour un opérateur",
         "Proginov",
         "Proginov - Export Excel"
     ])
@@ -502,7 +502,7 @@ if uploaded_file:
                         download_excel(pivot, "meilleures_offres_differentes_marges.xlsx", key="dl_tab_dm")
 
     # Onglet 4 : Configurateur d'offre client
-    with onglets[3]:
+    with onglets[4]:
         st.markdown("### Configurateur d'offre client")
         if check_columns(df):
             sites_all = df['Site'].dropna().unique()
@@ -930,7 +930,7 @@ if uploaded_file:
                                key="dl_conf")
 
     # Onglet 5 : Site Eligible pour un opérateur
-    with onglets[5]:
+    with onglets[3]:
         st.markdown("### Site Eligible pour un opérateur")
         if check_columns(df):
             technos = df['Technologie'].dropna().unique()
@@ -960,7 +960,7 @@ if uploaded_file:
                 download_excel(df_filtered[colonnes_a_afficher], "offres_filtrees.xlsx", key="dl_tab2")
 
     # Onglet 6 : Devis
-    with onglets[4]:
+    with onglets[5]:
         st.markdown("### Devis")
         st.markdown("#### NXO FRANCE")
         col1, col2 = st.columns(2)
