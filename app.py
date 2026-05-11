@@ -219,6 +219,7 @@ if uploaded_file:
         "FAS/ABO le moins cher - Différentes Marges",
         "Configurateur d'offre client",
         "Site Eligible pour un opérateur",
+        "Devis",
         "Proginov",
         "Proginov - Export Excel"
     ])
@@ -783,13 +784,18 @@ if uploaded_file:
                 st.dataframe(df_filtered[colonnes_a_afficher], use_container_width=True)
                 download_excel(df_filtered[colonnes_a_afficher], "offres_filtrees.xlsx", key="dl_tab2")
 
-    # Onglet 5 : Proginov
+    # Onglet 6 : Devis
     with onglets[5]:
+        st.markdown("### Devis")
+        st.info("Onglet en cours de construction — le générateur de devis PDF sera disponible ici.")
+
+    # Onglet 7 : Proginov
+    with onglets[6]:
         st.markdown("### Proginov")
         render_proginov_tab(df, zone_nouvelle, key_prefix="5", filename="proginov_nouvelle_zone.xlsx")
 
-    # Onglet 7 : Proginov - Export Excel
-    with onglets[6]:
+    # Onglet 8 : Proginov - Export Excel
+    with onglets[7]:
         st.markdown("### Proginov - Export Excel")
         if check_columns(df):
             ftth_ops = precompute_ftth_ops(df)
