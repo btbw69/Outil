@@ -858,29 +858,30 @@ if uploaded_file:
         if st.session_state.get('devis_show_conf') and 'conf_result_df' in st.session_state:
             conf_df = st.session_state['conf_result_df']
             st.markdown("#### Liens importés du configurateur")
-            h = st.columns([2, 1.2, 1.2, 1.5, 1, 1, 1])
-            for col, label in zip(h, ["Site", "Technologie", "Débit", "Opérateur", "Marge %", "FAS", "Abo"]):
+            h = st.columns([2, 1.2, 1.2, 1.5, 0.8, 1, 0.8, 1])
+            for col, label in zip(h, ["Site", "Technologie", "Débit", "Opérateur", "M. FAS", "FAS", "M. Abo", "Abo"]):
                 col.markdown(f"**{label}**")
             st.divider()
             prev_site = None
             for _, row in conf_df.iterrows():
-                cols = st.columns([2, 1.2, 1.2, 1.5, 1, 1, 1])
+                cols = st.columns([2, 1.2, 1.2, 1.5, 0.8, 1, 0.8, 1])
                 site_display = row['Site'] if row['Site'] != prev_site else ''
                 prev_site = row['Site']
                 cols[0].markdown(site_display)
                 cols[1].markdown(str(row['Technologie']))
                 cols[2].markdown(str(row['Débit']))
                 cols[3].markdown(str(row['Opérateur']))
-                cols[4].markdown(f"{row['Marge %']:.1f}%")
+                cols[4].markdown(f"{row['Marge FAS']:.1f}%")
                 fas_val = row["Frais d'accès"]
                 cols[5].markdown(f"{fas_val:.2f} €")
-                cols[6].markdown(f"{row['Prix mensuel']:.2f} €")
+                cols[6].markdown(f"{row['Marge Abo']:.1f}%")
+                cols[7].markdown(f"{row['Prix mensuel']:.2f} €")
             st.divider()
-            tot_cols = st.columns([2, 1.2, 1.2, 1.5, 1, 1, 1])
+            tot_cols = st.columns([2, 1.2, 1.2, 1.5, 0.8, 1, 0.8, 1])
             tot_cols[4].markdown("**Total**")
             total_fas_devis = conf_df["Frais d'accès"].sum()
             tot_cols[5].markdown(f"**{total_fas_devis:.2f} €**")
-            tot_cols[6].markdown(f"**{conf_df['Prix mensuel'].sum():.2f} €**")
+            tot_cols[7].markdown(f"**{conf_df['Prix mensuel'].sum():.2f} €**")
         elif st.session_state.get('devis_show_conf'):
             st.info("Aucune donnée dans le configurateur — configurez d'abord vos sites dans l'onglet 'Configurateur d'offre client'.")
 
