@@ -206,7 +206,8 @@ if uploaded_file:
                     if j in locked_positions:
                         old_lid = locked_positions[j]
                         if old_lid != lid:
-                            for sfx in ['techno', 'debit', 'force', 'op', 'marge_fas', 'marge_abo', 'lock']:
+                            for sfx in ['techno', 'debit', 'force', 'op', 'marge_fas', 'marge_abo', 'lock',
+                                        'snap_techno', 'snap_debit', 'snap_force', 'snap_op', 'snap_marge_fas', 'snap_marge_abo']:
                                 ok = f'conf_{sfx}_{i}_{old_lid}'
                                 if ok in st.session_state:
                                     st.session_state[f'conf_{sfx}_{i}_{lid}'] = st.session_state.pop(ok)
@@ -232,7 +233,8 @@ if uploaded_file:
                         lid = j_pos
                         new_links.append({'id': lid})
                         if old_lid != lid:
-                            for sfx in ['techno', 'debit', 'force', 'op', 'marge_fas', 'marge_abo', 'lock']:
+                            for sfx in ['techno', 'debit', 'force', 'op', 'marge_fas', 'marge_abo', 'lock',
+                                        'snap_techno', 'snap_debit', 'snap_force', 'snap_op', 'snap_marge_fas', 'snap_marge_abo']:
                                 ok = f'conf_{sfx}_{i}_{old_lid}'
                                 if ok in st.session_state:
                                     st.session_state[f'conf_{sfx}_{i}_{lid}'] = st.session_state.pop(ok)
@@ -596,8 +598,31 @@ if uploaded_file:
                 st.session_state[lk] = [l for l in st.session_state[lk] if l['id'] != link_id]
                 for k in [f'conf_techno_{site_i}_{link_id}', f'conf_debit_{site_i}_{link_id}',
                            f'conf_force_{site_i}_{link_id}', f'conf_op_{site_i}_{link_id}',
-                           f'conf_marge_fas_{site_i}_{link_id}', f'conf_marge_abo_{site_i}_{link_id}']:
+                           f'conf_marge_fas_{site_i}_{link_id}', f'conf_marge_abo_{site_i}_{link_id}',
+                           f'conf_lock_{site_i}_{link_id}',
+                           f'conf_snap_techno_{site_i}_{link_id}', f'conf_snap_debit_{site_i}_{link_id}',
+                           f'conf_snap_force_{site_i}_{link_id}', f'conf_snap_op_{site_i}_{link_id}',
+                           f'conf_snap_marge_fas_{site_i}_{link_id}', f'conf_snap_marge_abo_{site_i}_{link_id}']:
                     st.session_state.pop(k, None)
+
+            def on_lock_toggle(site_i, link_id):
+                if st.session_state.get(f'conf_lock_{site_i}_{link_id}', False):
+                    # Verrouillage : copier les valeurs widget → clés user-managed (conf_snap_*)
+                    for sfx in ['techno', 'debit', 'op']:
+                        wk = f'conf_{sfx}_{site_i}_{link_id}'
+                        if wk in st.session_state:
+                            st.session_state[f'conf_snap_{sfx}_{site_i}_{link_id}'] = st.session_state[wk]
+                    st.session_state[f'conf_snap_force_{site_i}_{link_id}'] = st.session_state.get(f'conf_force_{site_i}_{link_id}', False)
+                    for sfx in ['marge_fas', 'marge_abo']:
+                        wk = f'conf_{sfx}_{site_i}_{link_id}'
+                        if wk in st.session_state:
+                            st.session_state[f'conf_snap_{sfx}_{site_i}_{link_id}'] = float(st.session_state[wk])
+                else:
+                    # Déverrouillage : restaurer les snapshots vers les clés widget
+                    for sfx in ['techno', 'debit', 'op', 'force', 'marge_fas', 'marge_abo']:
+                        sk = f'conf_snap_{sfx}_{site_i}_{link_id}'
+                        if sk in st.session_state:
+                            st.session_state[f'conf_{sfx}_{site_i}_{link_id}'] = st.session_state[sk]
 
             col_params, col_ftto, col_space = st.columns([1, 1, 2])
             with col_params:
@@ -648,7 +673,9 @@ if uploaded_file:
 
                     with cols[11]:
                         st.markdown("<br>", unsafe_allow_html=True)
-                        locked = st.checkbox("🔒", key=f"conf_lock_{i}_{lid}", label_visibility="collapsed")
+                        locked = st.checkbox("🔒", key=f"conf_lock_{i}_{lid}",
+                                             on_change=on_lock_toggle, args=(i, lid),
+                                             label_visibility="collapsed")
 
                     with cols[0]:
                         if j_idx == 0:
@@ -657,7 +684,14 @@ if uploaded_file:
                     technos = sorted(df_site['Technologie'].dropna().unique(), key=lambda t: ordre_techno.get(t, 99))
 
                     if locked:
-                        techno = st.session_state.get(f'conf_techno_{i}_{lid}', technos[0] if technos else '')
+                        # Initialiser les snapshots si absents (ex : config chargée depuis JSON)
+                        for sfx in ['techno', 'debit', 'op', 'force', 'marge_fas', 'marge_abo']:
+                            snap_k = f'conf_snap_{sfx}_{i}_{lid}'
+                            src_k = f'conf_{sfx}_{i}_{lid}'
+                            if snap_k not in st.session_state and src_k in st.session_state:
+                                st.session_state[snap_k] = st.session_state[src_k]
+                        techno = st.session_state.get(f'conf_snap_techno_{i}_{lid}',
+                                                       st.session_state.get(f'conf_techno_{i}_{lid}', technos[0] if technos else ''))
                         cols[1].markdown(str(techno))
                     else:
                         with cols[1]:
@@ -670,8 +704,10 @@ if uploaded_file:
                     debits = sort_debits(df_site_tech['Débit'].dropna().unique())
 
                     if locked:
-                        debit = st.session_state.get(f'conf_debit_{i}_{lid}', debits[0] if debits else '')
-                        force = st.session_state.get(f'conf_force_{i}_{lid}', False)
+                        debit = st.session_state.get(f'conf_snap_debit_{i}_{lid}',
+                                                      st.session_state.get(f'conf_debit_{i}_{lid}', debits[0] if debits else ''))
+                        force = st.session_state.get(f'conf_snap_force_{i}_{lid}',
+                                                      st.session_state.get(f'conf_force_{i}_{lid}', False))
                         cols[3].markdown(str(debit))
                         cols[4].markdown("✓" if force else "")
                     else:
@@ -686,7 +722,8 @@ if uploaded_file:
                     df_td['Coût total'] = df_td['Prix mensuel'] * engagement + df_td["Frais d'accès"]
 
                     if locked:
-                        op = st.session_state.get(f'conf_op_{i}_{lid}', '')
+                        op = st.session_state.get(f'conf_snap_op_{i}_{lid}',
+                                                   st.session_state.get(f'conf_op_{i}_{lid}', ''))
                         ligne = df_td[df_td['Opérateur'] == op] if op else df_td.sort_values('Coût total').iloc[:1]
                         if ligne.empty:
                             ligne = df_td.sort_values('Coût total').iloc[:1]
@@ -706,8 +743,10 @@ if uploaded_file:
                     abo_brut = ligne['Prix mensuel'].values[0] if not ligne.empty else 0
 
                     if locked:
-                        marge_fas = float(st.session_state.get(f'conf_marge_fas_{i}_{lid}', 0.0))
-                        marge_abo = float(st.session_state.get(f'conf_marge_abo_{i}_{lid}', 0.0))
+                        marge_fas = float(st.session_state.get(f'conf_snap_marge_fas_{i}_{lid}',
+                                                                st.session_state.get(f'conf_marge_fas_{i}_{lid}', 0.0)))
+                        marge_abo = float(st.session_state.get(f'conf_snap_marge_abo_{i}_{lid}',
+                                                                st.session_state.get(f'conf_marge_abo_{i}_{lid}', 0.0)))
                         cols[6].markdown(f"{marge_fas:.1f}%")
                         cols[8].markdown(f"{marge_abo:.1f}%")
                     else:
