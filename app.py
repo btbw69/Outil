@@ -1009,85 +1009,41 @@ if uploaded_file:
         devis_vars['$commentForCustomer$'] = devis_commentaire
 
         st.divider()
-        if st.button("📥 Importer données configurateur"):
-            st.session_state['devis_show_conf'] = True
-            live_df = st.session_state.get('conf_result_df_live')
-            if live_df is not None:
-                snapshot = live_df.copy().reset_index(drop=True)
-                snapshot['cout_fas'] = snapshot["Frais d'accès"] * (1 - snapshot['Marge FAS'] / 100)
-                snapshot['cout_abo'] = snapshot['Prix mensuel'] * (1 - snapshot['Marge Abo'] / 100)
-                old_df = st.session_state.get('conf_result_df')
-                if old_df is not None:
-                    for _idx in range(len(snapshot)):
-                        if st.session_state.get(f'devis_lock_{_idx}', False) and _idx < len(old_df):
-                            snapshot.at[_idx, "Frais d'accès"] = old_df.iloc[_idx]["Frais d'accès"]
-                            snapshot.at[_idx, 'Prix mensuel'] = old_df.iloc[_idx]['Prix mensuel']
-                            snapshot.at[_idx, 'cout_fas'] = old_df.iloc[_idx]['cout_fas']
-                            snapshot.at[_idx, 'cout_abo'] = old_df.iloc[_idx]['cout_abo']
-                st.session_state['conf_result_df'] = snapshot
-            st.session_state['devis_edit_ctr'] = st.session_state.get('devis_edit_ctr', 0) + 1
-
-        if st.session_state.get('devis_show_conf') and 'conf_result_df' in st.session_state:
-            conf_df = st.session_state['conf_result_df']
-            edit_ctr = st.session_state.get('devis_edit_ctr', 0)
-            st.markdown("#### Liens importés du configurateur")
-            h = st.columns([2, 1.2, 1.2, 1.5, 0.8, 1, 0.8, 1, 1.5])
-            for col, label in zip(h, ["Site", "Technologie", "Débit", "Opérateur", "M. FAS", "FAS", "M. Abo", "Abo", "Bloquer modifs"]):
+        conf_df = st.session_state.get('conf_result_df_live')
+        if conf_df is not None and not conf_df.empty:
+            st.markdown("#### Liens du configurateur")
+            h = st.columns([2, 1.2, 1.2, 1.5, 0.8, 1, 0.8, 1])
+            for col, label in zip(h, ["Site", "Technologie", "Débit", "Opérateur", "M. FAS", "FAS", "M. Abo", "Abo"]):
                 col.markdown(f"**{label}**")
             st.divider()
             prev_site = None
             total_fas_devis = 0.0
             total_abo_devis = 0.0
-            for idx, (_, row) in enumerate(conf_df.iterrows()):
-                cols = st.columns([2, 1.2, 1.2, 1.5, 0.8, 1, 0.8, 1, 1.5])
+            for _, row in conf_df.iterrows():
+                cols = st.columns([2, 1.2, 1.2, 1.5, 0.8, 1, 0.8, 1])
                 site_display = row['Site'] if row['Site'] != prev_site else ''
                 prev_site = row['Site']
+                fas_val = float(row["Frais d'accès"])
+                abo_val = float(row['Prix mensuel'])
+                marge_fas_val = float(row['Marge FAS'])
+                marge_abo_val = float(row['Marge Abo'])
                 cols[0].markdown(site_display)
                 cols[1].markdown(str(row['Technologie']))
                 cols[2].markdown(str(row['Débit']))
                 cols[3].markdown(str(row['Opérateur']))
-
-                with cols[8]:
-                    locked = st.checkbox("🔒", key=f"devis_lock_{idx}", label_visibility="collapsed")
-
-                fas_val = float(row["Frais d'accès"])
-                abo_val = float(row['Prix mensuel'])
-
-                if locked:
-                    cols[5].markdown(f"{fas_val:.2f} €")
-                    fas_edit = fas_val
-                    cols[7].markdown(f"{abo_val:.2f} €")
-                    abo_edit = abo_val
-                else:
-                    with cols[5]:
-                        fas_edit = st.number_input("FAS", value=fas_val,
-                                                   min_value=0.0, step=0.01,
-                                                   key=f"devis_fas_{edit_ctr}_{idx}",
-                                                   label_visibility="collapsed")
-                    with cols[7]:
-                        abo_edit = st.number_input("Abo", value=abo_val,
-                                                   min_value=0.0, step=0.01,
-                                                   key=f"devis_abo_{edit_ctr}_{idx}",
-                                                   label_visibility="collapsed")
-
-                cout_fas = row['cout_fas']
-                marge_fas_calc = (1 - cout_fas / fas_edit) * 100 if fas_edit > 0 else 0.0
-                cols[4].markdown(f"{marge_fas_calc:.1f}%")
-
-                cout_abo = row['cout_abo']
-                marge_abo_calc = (1 - cout_abo / abo_edit) * 100 if abo_edit > 0 else 0.0
-                cols[6].markdown(f"{marge_abo_calc:.1f}%")
-
-                total_fas_devis += fas_edit
-                total_abo_devis += abo_edit
-
+                cols[4].markdown(f"{marge_fas_val:.1f}%")
+                cols[5].markdown(f"{fas_val:.2f} €")
+                cols[6].markdown(f"{marge_abo_val:.1f}%")
+                cols[7].markdown(f"{abo_val:.2f} €")
+                total_fas_devis += fas_val
+                total_abo_devis += abo_val
             st.divider()
-            tot_cols = st.columns([2, 1.2, 1.2, 1.5, 0.8, 1, 0.8, 1, 1.5])
+            tot_cols = st.columns([2, 1.2, 1.2, 1.5, 0.8, 1, 0.8, 1])
             tot_cols[4].markdown("**Total**")
             tot_cols[5].markdown(f"**{total_fas_devis:.2f} €**")
             tot_cols[7].markdown(f"**{total_abo_devis:.2f} €**")
-        elif st.session_state.get('devis_show_conf'):
-            st.info("Aucune donnée dans le configurateur — configurez d'abord vos sites dans l'onglet 'Configurateur d'offre client'.")
+        else:
+            st.info("Aucune donnée — configurez d'abord vos sites dans l'onglet 'Configurateur d'offre client'.")
 
     # Onglet 7 : Proginov
     with onglets[6]:
