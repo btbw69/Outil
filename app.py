@@ -810,12 +810,12 @@ if uploaded_file:
                 config_save[site] = {
                     'links': [
                         {
-                            'techno': st.session_state.get(f'conf_techno_{i}_{l["id"]}'),
-                            'debit': st.session_state.get(f'conf_debit_{i}_{l["id"]}'),
-                            'force': st.session_state.get(f'conf_force_{i}_{l["id"]}', False),
-                            'op': st.session_state.get(f'conf_op_{i}_{l["id"]}'),
-                            'marge_fas': st.session_state.get(f'conf_marge_fas_{i}_{l["id"]}'),
-                            'marge_abo': st.session_state.get(f'conf_marge_abo_{i}_{l["id"]}'),
+                            'techno': st.session_state.get(f'conf_snap_techno_{i}_{l["id"]}') or st.session_state.get(f'conf_techno_{i}_{l["id"]}'),
+                            'debit': st.session_state.get(f'conf_snap_debit_{i}_{l["id"]}') or st.session_state.get(f'conf_debit_{i}_{l["id"]}'),
+                            'force': st.session_state.get(f'conf_snap_force_{i}_{l["id"]}', st.session_state.get(f'conf_force_{i}_{l["id"]}', False)),
+                            'op': st.session_state.get(f'conf_snap_op_{i}_{l["id"]}') or st.session_state.get(f'conf_op_{i}_{l["id"]}'),
+                            'marge_fas': st.session_state.get(f'conf_snap_marge_fas_{i}_{l["id"]}') or st.session_state.get(f'conf_marge_fas_{i}_{l["id"]}'),
+                            'marge_abo': st.session_state.get(f'conf_snap_marge_abo_{i}_{l["id"]}') or st.session_state.get(f'conf_marge_abo_{i}_{l["id"]}'),
                         }
                         for l in links
                     ]
