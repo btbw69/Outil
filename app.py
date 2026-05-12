@@ -175,6 +175,14 @@ if uploaded_file:
         axis=1
     )
 
+    _techno_norm = {'radio4g': '4G', 'radio5g': '5G'}
+    df['Technologie'] = df['Technologie'].apply(
+        lambda x: _techno_norm.get(str(x).lower(), x) if pd.notna(x) else x
+    )
+    df['Débit'] = df['Débit'].apply(
+        lambda x: 'illimité' if pd.notna(x) and str(x).lower() == '0go' else x
+    )
+
     # Appliquer la config en attente AVANT tout rendu de tab/widget
     if 'conf_pending' in st.session_state:
         pending = st.session_state.pop('conf_pending')
