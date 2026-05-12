@@ -967,6 +967,17 @@ if uploaded_file:
                 st.dataframe(df_filtered[colonnes_a_afficher], use_container_width=True)
                 download_excel(df_filtered[colonnes_a_afficher], "offres_filtrees.xlsx", key="dl_tab2")
 
+    def devis_service_label(techno, debit):
+        t = str(techno).upper()
+        d = str(debit)
+        if t == 'FTTO':
+            return f"FTTO - Débit Garanti {d} - GTR 4H HO 5/7"
+        elif t == 'FTTH':
+            return f"FTTH - Best Effort {d} Max."
+        elif t == '4G':
+            return "Backup 4G Illimité" if d.lower() == 'illimité' else f"Backup 4G {d}"
+        return f"{techno} {d}"
+
     # Onglet 6 : Devis
     with onglets[5]:
         st.markdown("### Devis")
@@ -1020,31 +1031,37 @@ if uploaded_file:
         conf_df = st.session_state.get('conf_result_df_live')
         if conf_df is not None and not conf_df.empty:
             st.markdown("#### Liens du configurateur")
-            h = st.columns([2, 1.5, 1.5, 1, 1])
-            for col, label in zip(h, ["Site", "Service", "Débit", "FAS", "Abo"]):
+            h = st.columns([1.5, 4, 1, 1])
+            for col, label in zip(h, ["Site", "Service", "FAS", "Abo"]):
                 col.markdown(f"**{label}**")
             st.divider()
             prev_site = None
             total_fas_devis = 0.0
             total_abo_devis = 0.0
-            for _, row in conf_df.iterrows():
-                cols = st.columns([2, 1.5, 1.5, 1, 1])
+            for idx, (_, row) in enumerate(conf_df.iterrows()):
+                cols = st.columns([1.5, 4, 1, 1])
                 site_display = row['Site'] if row['Site'] != prev_site else ''
                 prev_site = row['Site']
                 fas_val = float(row["Frais d'accès"])
                 abo_val = float(row['Prix mensuel'])
+                src_key = f'devis_service_src_{idx}'
+                svc_key = f'devis_service_{idx}'
+                cur_src = f"{row['Technologie']}|{row['Débit']}"
+                if st.session_state.get(src_key) != cur_src:
+                    st.session_state[src_key] = cur_src
+                    st.session_state[svc_key] = devis_service_label(row['Technologie'], row['Débit'])
                 cols[0].markdown(site_display)
-                cols[1].markdown(str(row['Technologie']))
-                cols[2].markdown(str(row['Débit']))
-                cols[3].markdown(f"{fas_val:.2f} €")
-                cols[4].markdown(f"{abo_val:.2f} €")
+                with cols[1]:
+                    st.text_input("", key=svc_key, label_visibility="collapsed")
+                cols[2].markdown(f"{fas_val:.2f} €")
+                cols[3].markdown(f"{abo_val:.2f} €")
                 total_fas_devis += fas_val
                 total_abo_devis += abo_val
             st.divider()
-            tot_cols = st.columns([2, 1.5, 1.5, 1, 1])
-            tot_cols[2].markdown("**Total**")
-            tot_cols[3].markdown(f"**{total_fas_devis:.2f} €**")
-            tot_cols[4].markdown(f"**{total_abo_devis:.2f} €**")
+            tot_cols = st.columns([1.5, 4, 1, 1])
+            tot_cols[1].markdown("**Total**")
+            tot_cols[2].markdown(f"**{total_fas_devis:.2f} €**")
+            tot_cols[3].markdown(f"**{total_abo_devis:.2f} €**")
         else:
             st.info("Aucune donnée — configurez d'abord vos sites dans l'onglet 'Configurateur d'offre client'.")
 
