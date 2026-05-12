@@ -1059,6 +1059,7 @@ if uploaded_file:
                 total_fas_devis += fas_val
                 total_abo_devis += abo_val
                 devis_rows.append({
+                    '$siteName$': row['Site'],
                     '$serviceName$': st.session_state.get(svc_key, ''),
                 })
             st.session_state['devis_rows'] = devis_rows
