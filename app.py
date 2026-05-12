@@ -701,7 +701,7 @@ if uploaded_file:
 
             # En-têtes
             h = st.columns([2, 1.2, 0.35, 1.2, 1.5, 1.5, 0.8, 1, 0.8, 1, 0.4, 0.8])
-            for col, label in zip(h, ["Site", "Technologie", "", "Débit", "Forcer opérateur ?", "Opérateur", "M. FAS", "FAS", "M. Abo", "Abo", "", "🔒"]):
+            for col, label in zip(h, ["Site", "Service", "", "Débit", "Forcer opérateur ?", "Opérateur", "M. FAS", "FAS", "M. Abo", "Abo", "", "🔒"]):
                 col.markdown(f"**{label}**")
             st.divider()
 
@@ -1021,7 +1021,7 @@ if uploaded_file:
         if conf_df is not None and not conf_df.empty:
             st.markdown("#### Liens du configurateur")
             h = st.columns([2, 1.5, 1.5, 1, 1])
-            for col, label in zip(h, ["Site", "Technologie", "Débit", "FAS", "Abo"]):
+            for col, label in zip(h, ["Site", "Service", "Débit", "FAS", "Abo"]):
                 col.markdown(f"**{label}**")
             st.divider()
             prev_site = None
