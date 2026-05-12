@@ -1020,36 +1020,32 @@ if uploaded_file:
         conf_df = st.session_state.get('conf_result_df_live')
         if conf_df is not None and not conf_df.empty:
             st.markdown("#### Liens du configurateur")
-            h = st.columns([2, 1.2, 1.2, 1.5, 0.8, 1, 0.8, 1])
-            for col, label in zip(h, ["Site", "Technologie", "Débit", "Opérateur", "M. FAS", "FAS", "M. Abo", "Abo"]):
+            h = st.columns([2, 1.2, 1.2, 1.5, 1, 1])
+            for col, label in zip(h, ["Site", "Technologie", "Débit", "Opérateur", "FAS", "Abo"]):
                 col.markdown(f"**{label}**")
             st.divider()
             prev_site = None
             total_fas_devis = 0.0
             total_abo_devis = 0.0
             for _, row in conf_df.iterrows():
-                cols = st.columns([2, 1.2, 1.2, 1.5, 0.8, 1, 0.8, 1])
+                cols = st.columns([2, 1.2, 1.2, 1.5, 1, 1])
                 site_display = row['Site'] if row['Site'] != prev_site else ''
                 prev_site = row['Site']
                 fas_val = float(row["Frais d'accès"])
                 abo_val = float(row['Prix mensuel'])
-                marge_fas_val = float(row['Marge FAS'])
-                marge_abo_val = float(row['Marge Abo'])
                 cols[0].markdown(site_display)
                 cols[1].markdown(str(row['Technologie']))
                 cols[2].markdown(str(row['Débit']))
                 cols[3].markdown(str(row['Opérateur']))
-                cols[4].markdown(f"{marge_fas_val:.1f}%")
-                cols[5].markdown(f"{fas_val:.2f} €")
-                cols[6].markdown(f"{marge_abo_val:.1f}%")
-                cols[7].markdown(f"{abo_val:.2f} €")
+                cols[4].markdown(f"{fas_val:.2f} €")
+                cols[5].markdown(f"{abo_val:.2f} €")
                 total_fas_devis += fas_val
                 total_abo_devis += abo_val
             st.divider()
-            tot_cols = st.columns([2, 1.2, 1.2, 1.5, 0.8, 1, 0.8, 1])
-            tot_cols[4].markdown("**Total**")
-            tot_cols[5].markdown(f"**{total_fas_devis:.2f} €**")
-            tot_cols[7].markdown(f"**{total_abo_devis:.2f} €**")
+            tot_cols = st.columns([2, 1.2, 1.2, 1.5, 1, 1])
+            tot_cols[3].markdown("**Total**")
+            tot_cols[4].markdown(f"**{total_fas_devis:.2f} €**")
+            tot_cols[5].markdown(f"**{total_abo_devis:.2f} €**")
         else:
             st.info("Aucune donnée — configurez d'abord vos sites dans l'onglet 'Configurateur d'offre client'.")
 
