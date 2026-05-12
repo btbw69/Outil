@@ -1038,6 +1038,7 @@ if uploaded_file:
             prev_site = None
             total_fas_devis = 0.0
             total_abo_devis = 0.0
+            devis_rows = []
             for idx, (_, row) in enumerate(conf_df.iterrows()):
                 cols = st.columns([1.5, 4, 1, 1])
                 site_display = row['Site'] if row['Site'] != prev_site else ''
@@ -1057,7 +1058,10 @@ if uploaded_file:
                 cols[3].markdown(f"{abo_val:.2f} €")
                 total_fas_devis += fas_val
                 total_abo_devis += abo_val
-                devis_vars[f'$serviceName_{idx}$'] = st.session_state.get(svc_key, '')
+                devis_rows.append({
+                    '$serviceName$': st.session_state.get(svc_key, ''),
+                })
+            st.session_state['devis_rows'] = devis_rows
             st.divider()
             tot_cols = st.columns([1.5, 4, 1, 1])
             tot_cols[1].markdown("**Total**")
