@@ -973,7 +973,7 @@ if uploaded_file:
         if t == 'FTTO':
             return f"FTTO - Débit Garanti {d} - GTR 4H HO 5/7"
         elif t == 'FTTH':
-            return f"FTTH - Best Effort {d} Max."
+            return f"FTTH - Best Effort {d} Max"
         elif t == '4G':
             return "Backup 4G Illimité" if d.lower() == 'illimité' else f"Backup 4G {d}"
         return f"{techno} {d}"
