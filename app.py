@@ -46,9 +46,22 @@ COLUMN_MAPPING = {
 COLS_TO_HIDE = {'NDI', 'INSEECode', 'rivoli code', 'Available Copper Pair', 'Needed Copper Pair'}
 
 
-def download_excel(df, filename, label="📥 Télécharger le fichier Excel", key=None):
+def download_excel(df, filename, label="📥 Télécharger le fichier Excel", key=None, autofit=False):
+    from openpyxl import Workbook
+    from openpyxl.utils import get_column_letter
     buf = BytesIO()
-    df.to_excel(buf, index=False, engine='openpyxl')
+    if autofit:
+        with pd.ExcelWriter(buf, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False)
+            ws = writer.sheets['Sheet1']
+            for i, col in enumerate(df.columns, 1):
+                max_len = max(
+                    len(str(col)),
+                    df[col].astype(str).map(len).max() if not df.empty else 0
+                )
+                ws.column_dimensions[get_column_letter(i)].width = max_len + 4
+    else:
+        df.to_excel(buf, index=False, engine='openpyxl')
     buf.seek(0)
     st.download_button(label=label, data=buf, file_name=filename,
                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -507,7 +520,7 @@ if uploaded_file:
                         st.markdown(f"### Nombre de sites éligibles : {nb_sites}")
                         st.subheader("Meilleures offres par site avec différentes marges")
                         st.dataframe(pivot, use_container_width=True)
-                        download_excel(pivot, "meilleures_offres_differentes_marges.xlsx", key="dl_tab_dm")
+                        download_excel(pivot, "meilleures_offres_differentes_marges.xlsx", key="dl_tab_dm", autofit=True)
 
     # Onglet 4 : Configurateur d'offre client
     with onglets[4]:
