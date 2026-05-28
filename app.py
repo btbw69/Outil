@@ -86,15 +86,17 @@ def precompute_ftth_ops(df):
     )
 
 
+OP_ZONE_FTTH = {'SFR': 'N10', 'KOSC': 'N11', 'Axione': 'N11'}
+
+
 def zone_classic(row, ftth_ops):
     if row['Technologie'] == 'FTTH':
         ops = ftth_ops.get(row['Site'], set())
-        if 'SFR' in ops and 'KOSC' in ops:
-            return 'SFR N10 Kosc N11'
-        if row['Opérateur'] == 'SFR':
-            return 'N10'
-        if row['Opérateur'] == 'KOSC':
-            return 'N11'
+        known_ops = [op for op in ops if op in OP_ZONE_FTTH]
+        if len(known_ops) > 1:
+            return ' '.join(f"{op} {OP_ZONE_FTTH[op]}" for op in known_ops)
+        if row['Opérateur'] in OP_ZONE_FTTH:
+            return OP_ZONE_FTTH[row['Opérateur']]
     elif row['Technologie'] == 'FTTO':
         p = row['Prix mensuel']
         if p < 218:
@@ -112,12 +114,11 @@ def zone_classic(row, ftth_ops):
 def zone_nouvelle(row, ftth_ops):
     if row['Technologie'] == 'FTTH':
         ops = ftth_ops.get(row['Site'], set())
-        if 'SFR' in ops and 'KOSC' in ops:
-            return 'SFR N10 Kosc N11'
-        if row['Opérateur'] == 'SFR':
-            return 'N10'
-        if row['Opérateur'] == 'KOSC':
-            return 'N11'
+        known_ops = [op for op in ops if op in OP_ZONE_FTTH]
+        if len(known_ops) > 1:
+            return ' '.join(f"{op} {OP_ZONE_FTTH[op]}" for op in known_ops)
+        if row['Opérateur'] in OP_ZONE_FTTH:
+            return OP_ZONE_FTTH[row['Opérateur']]
     elif row['Technologie'] == 'FTTO':
         p = row['Prix mensuel']
         if p <= 175:
