@@ -158,6 +158,7 @@ def render_proginov_tab(df, zone_fn, key_prefix, filename):
 
     available_operators = df_filtered['Opérateur'].dropna().unique()
     excluded_ops = [op for op in available_operators if st.checkbox(f"Exclure {op}", key=f"exc_{key_prefix}_{op}")]
+    st.session_state[f'proginov_excluded_ops_{key_prefix}'] = excluded_ops
     df_filtered = df_filtered[~df_filtered['Opérateur'].isin(excluded_ops)].copy()
 
     if df_filtered.empty:
@@ -1097,7 +1098,10 @@ if uploaded_file:
             ftth_ops = precompute_ftth_ops(df)
 
             # FTTO : meilleur opérateur et zone par site avec priorité hors SFR/Orange
+            excluded_ops_export = st.session_state.get('proginov_excluded_ops_5', [])
             df_ftto = df[(df['Opérateur'] != 'COMPLETEL') & (df['Technologie'] == 'FTTO') & (df['Débit'] == '10M')].copy()
+            if excluded_ops_export:
+                df_ftto = df_ftto[~df_ftto['Opérateur'].isin(excluded_ops_export)]
             df_ftto["Frais d'accès"] = df_ftto["Frais d'accès"].fillna(0)
             df_ftto['Zone'] = df_ftto.apply(zone_nouvelle, axis=1, ftth_ops=ftth_ops)
             df_ftto['Coût total'] = df_ftto['Prix mensuel'] * 36 + df_ftto["Frais d'accès"]
