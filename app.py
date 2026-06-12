@@ -1132,18 +1132,13 @@ if uploaded_file:
             burst_data = best_ftto['Site'].apply(lambda s: pd.Series(get_burst_info(s), index=['Eligible DG', 'Zone DG']))
             best_ftto = pd.concat([best_ftto, burst_data], axis=1)
 
-            # FTTH Sans Garantie : SFR / KOSC
+            # FTTH Sans Garantie : SFR / KOSC / Axione
             def get_ftth_sg_info(site):
                 ops = ftth_ops.get(site, set())
-                sfr = 'SFR' in ops
-                kosc = 'KOSC' in ops
-                if not sfr and not kosc:
+                known_ops = [op for op in ops if op in OP_ZONE_FTTH]
+                if not known_ops:
                     return 'Non', ''
-                if sfr and kosc:
-                    return 'Oui', 'SFR N10 Kosc N11'
-                if sfr:
-                    return 'Oui', 'SFR N10'
-                return 'Oui', 'KOSC N11'
+                return 'Oui', ' '.join(f"{op} {OP_ZONE_FTTH[op]}" for op in known_ops)
 
             sg_data = best_ftto['Site'].apply(lambda s: pd.Series(get_ftth_sg_info(s), index=['Eligible SG', 'Zone SG']))
             best_ftto = pd.concat([best_ftto, sg_data], axis=1)
