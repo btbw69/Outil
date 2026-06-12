@@ -115,10 +115,8 @@ def zone_nouvelle(row, ftth_ops):
     if row['Technologie'] == 'FTTH':
         ops = ftth_ops.get(row['Site'], set())
         known_ops = [op for op in ops if op in OP_ZONE_FTTH]
-        if len(known_ops) > 1:
+        if len(known_ops) >= 1:
             return ' '.join(f"{op} {OP_ZONE_FTTH[op]}" for op in known_ops)
-        if row['Opérateur'] in OP_ZONE_FTTH:
-            return OP_ZONE_FTTH[row['Opérateur']]
     elif row['Technologie'] == 'FTTO':
         p = row['Prix mensuel']
         if p <= 175:
