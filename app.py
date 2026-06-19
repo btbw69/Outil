@@ -171,7 +171,7 @@ def render_proginov_tab(df, zone_fn, key_prefix, filename):
     colonnes = ['Site', 'Technologie', 'Opérateur', 'Prix mensuel', 'Zone']
 
     st.dataframe(best[colonnes], use_container_width=True)
-    download_excel(best[colonnes], filename, key=f"dl_{key_prefix}")
+    download_excel(best[colonnes], filename, key=f"dl_{key_prefix}", autofit=True)
 
 
 uploaded_file = st.file_uploader("Téléversez le fichier d'offres", type=[".xlsx"])
