@@ -323,7 +323,7 @@ if uploaded_file:
                         st.markdown(f"### Nombre de sites éligibles : {nb_sites}")
                         st.subheader("Meilleures offres par site")
                         st.dataframe(pivot, use_container_width=True)
-                        download_excel(pivot, "meilleures_offres_multi_techno_debit.xlsx", key="dl_tab_mtmd")
+                        download_excel(pivot, "meilleures_offres_multi_techno_debit.xlsx", key="dl_tab_mtmd", autofit=True)
 
     # Onglet 2 : FAS/ABO le moins cher - Multi Techno / Multi Débit (clone)
     with onglets[1]:
@@ -369,7 +369,7 @@ if uploaded_file:
                         best_offers = sort_df_by_debit(best_offers, ['Site', 'Technologie'])
                         st.subheader("Meilleures offres par site, technologie et débit")
                         st.dataframe(best_offers[colonnes_a_afficher], use_container_width=True)
-                        download_excel(best_offers[colonnes_a_afficher], "meilleures_offres_multi_techno_debit2.xlsx", key="dl_tab_mtmd2")
+                        download_excel(best_offers[colonnes_a_afficher], "meilleures_offres_multi_techno_debit2.xlsx", key="dl_tab_mtmd2", autofit=True)
 
     # Onglet 3 : FAS/ABO le moins cher - Différentes Marges
     with onglets[2]:
