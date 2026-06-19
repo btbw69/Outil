@@ -978,7 +978,7 @@ if uploaded_file:
 
                 colonnes_a_afficher = ['Site', 'Opérateur', 'Technologie', 'Débit', "Frais d'accès", 'Prix mensuel']
                 st.dataframe(df_filtered[colonnes_a_afficher], use_container_width=True)
-                download_excel(df_filtered[colonnes_a_afficher], "offres_filtrees.xlsx", key="dl_tab2")
+                download_excel(df_filtered[colonnes_a_afficher], "offres_filtrees.xlsx", key="dl_tab2", autofit=True)
 
     def devis_service_label(techno, debit):
         t = str(techno).upper()
